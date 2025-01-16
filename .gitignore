@@ -1,0 +1,7 @@
+.tmp
+.venv
+bad.pdf
+*.png
+out/
+__pycache__
+.python-version

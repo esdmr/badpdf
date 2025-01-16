@@ -1,0 +1,3 @@
+[submodule "badapple-frames"]
+	path = frames/src
+	url = https://github.com/Felixoofed/badapple-frames.git
