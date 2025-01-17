@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <title>Bad Apple Preview</title>
 <h1>Bad Apple Preview</h1>
-<canvas style="width: 256px; image-rendering: pixelated;"></canvas>
+<canvas style="width: 256px; image-rendering: pixelated"></canvas>
 <button onclick="onInit()">Play</button>
 <p></p>
 <script type="module">
@@ -38,39 +38,39 @@
 	/**
 	 * @param {boolean} v
 	 */
-	function setPlayButtonVisibility (v) {
+	function setPlayButtonVisibility(v) {
 		document.querySelector('button').hidden = !v;
 	}
 
-	function startFrame () {
+	function startFrame() {
 		// Do nothing
 	}
 
-	function endFrame () {
+	function endFrame() {
 		ctx.putImageData(img, 0, 0);
 
-		status.innerText = `${frame.toString().padStart(4, '0')}: ${index.toString().padStart(6, '0')}/${frames.length.toString().padStart(6, '0')} bytes (${(index / frames.length * 100).toFixed(2).padStart(5, '0')}%), ${skippedFrames.toString().padStart(4, '0')} skipped (${(skippedFrames / frame * 100).toFixed(2).padStart(5, '0')}%), ${width}*${height} pixels, ${fps} Hz = ${mspf} ms`;
+		status.innerText = `${frame.toString().padStart(4, '0')}: ${index.toString().padStart(6, '0')}/${frames.length.toString().padStart(6, '0')} bytes (${((index / frames.length) * 100).toFixed(2).padStart(5, '0')}%), ${skippedFrames.toString().padStart(4, '0')} skipped (${((skippedFrames / frame) * 100).toFixed(2).padStart(5, '0')}%), ${width}*${height} pixels, ${fps} Hz = ${mspf} ms`;
 	}
 
 	/**
 	 * @param {number} index
 	 * @param {boolean} active
 	 */
-	function setPixel (index, active) {
-		img.data[index*4+0] = active ?255:0;
-		img.data[index*4+1] = active ?255:0;
-		img.data[index*4+2] = active ?255:0;
-		img.data[index*4+3] = 255;
+	function setPixel(index, active) {
+		img.data[index * 4 + 0] = active ? 255 : 0;
+		img.data[index * 4 + 1] = active ? 255 : 0;
+		img.data[index * 4 + 2] = active ? 255 : 0;
+		img.data[index * 4 + 3] = 255;
 	}
 
 	// #endregion
 	// #region Generic Methods
 
-	function readFrameLength () {
+	function readFrameLength() {
 		return frames[index++] + frames[index++] * 256;
 	}
 
-	function onFrame () {
+	function onFrame() {
 		if (index >= frames.length) {
 			setPlayButtonVisibility(true);
 			app.clearInterval(interval);
@@ -106,7 +106,7 @@
 		endFrame();
 	}
 
-	function onInit () {
+	function onInit() {
 		setPlayButtonVisibility(false);
 		index = 0;
 		frame = 0;

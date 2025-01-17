@@ -48,21 +48,25 @@ globalThis.onInit = onInit;
  * @param {string} str
  */
 function b64_to_uint8array(str) {
-	const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	const abc =
+		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	const result = [];
 
-	for(let i = 0; i < str.length / 4; i++) {
+	for (let i = 0; i < str.length / 4; i++) {
 		const bin = str
 			.slice(4 * i, 4 * i + 4)
 			.split('')
 			.map((x) => abc.indexOf(x).toString(2).padStart(6, '0'))
 			.join('');
 
-		const bytes = bin
-			.match(/.{1,8}/g)
-			?.map((x) => parseInt(x, 2)) ?? [];
+		const bytes = bin.match(/.{1,8}/g)?.map((x) => parseInt(x, 2)) ?? [];
 
-		result.push(...bytes.slice(0, 3 - +(str[4*i+2]=='=') - +(str[4*i+3]=='=')));
+		result.push(
+			...bytes.slice(
+				0,
+				3 - +(str[4 * i + 2] == '=') - +(str[4 * i + 3] == '='),
+			),
+		);
 	}
 
 	return new Uint8Array(result);
@@ -96,7 +100,7 @@ function startFrame() {
 function endFrame() {
 	delay = false;
 
-	statusField.value = `${frame.toString().padStart(4, '0')}: ${index.toString().padStart(6, '0')}/${frames.length.toString().padStart(6, '0')} bytes (${(index / frames.length * 100).toFixed(2).padStart(5, '0')}%), ${skippedFrames.toString().padStart(4, '0')} skipped (${(skippedFrames / frame * 100).toFixed(2).padStart(5, '0')}%), ${width}*${height} pixels, ${fps} Hz = ${mspf} ms`;
+	statusField.value = `${frame.toString().padStart(4, '0')}: ${index.toString().padStart(6, '0')}/${frames.length.toString().padStart(6, '0')} bytes (${((index / frames.length) * 100).toFixed(2).padStart(5, '0')}%), ${skippedFrames.toString().padStart(4, '0')} skipped (${((skippedFrames / frame) * 100).toFixed(2).padStart(5, '0')}%), ${width}*${height} pixels, ${fps} Hz = ${mspf} ms`;
 }
 
 /**
