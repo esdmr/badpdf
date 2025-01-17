@@ -3,7 +3,7 @@
 <h1>Bad Apple Preview</h1>
 <canvas style="width: 256px; image-rendering: pixelated;"></canvas>
 <button onclick="onInit()">Play</button>
-<input type="text" readonly style="width: 256px;">
+<p></p>
 <script type="module">
 	const optionsRes = await fetch('./frames/options.txt');
 	const options = await optionsRes.text();
@@ -12,8 +12,6 @@
 	const dataRes = await fetch('./frames/out/frames.bin');
 	const data = await dataRes.arrayBuffer();
 	const frames = new Uint8Array(data);
-	let index = 0;
-	let frame = 0;
 
 	const canvas = document.querySelector('canvas');
 	canvas.width = width;
@@ -21,27 +19,75 @@
 
 	const ctx = canvas.getContext('2d');
 	const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	const statField = document.querySelector('input');
-	let interval;
+	const status = document.querySelector('p');
+
+	// #region Generic Init
+	let index = 0;
+	let frame = 0;
+	let skippedFrames = 0;
+	let lastTime = 0;
+
+	const mspf = 1000 / fps;
+	let interval = 0;
 
 	globalThis.onFrame = onFrame;
 	globalThis.onInit = onInit;
 
+	// #endregion
+	// #region Interface Methods
+	/**
+	 * @param {boolean} v
+	 */
+	function setPlayButtonVisibility (v) {
+		document.querySelector('button').hidden = !v;
+	}
+
+	function startFrame () {
+		// Do nothing
+	}
+
+	function endFrame () {
+		ctx.putImageData(img, 0, 0);
+
+		status.innerText = `${frame.toString().padStart(4, '0')}: ${index.toString().padStart(6, '0')}/${frames.length.toString().padStart(6, '0')} bytes (${(index / frames.length * 100).toFixed(2).padStart(5, '0')}%), ${skippedFrames.toString().padStart(4, '0')} skipped (${(skippedFrames / frame * 100).toFixed(2).padStart(5, '0')}%), ${width}*${height} pixels, ${fps} Hz = ${mspf} ms`;
+	}
+
+	/**
+	 * @param {number} index
+	 * @param {boolean} active
+	 */
 	function setPixel (index, active) {
-		img.data[index * 4] = active ? 255 : 0;
-		img.data[index * 4 + 1] = active ? 255 : 0;
-		img.data[index * 4 + 2] = active ? 255 : 0;
-		img.data[index * 4 + 3] = 255;
+		img.data[index*4+0] = active ?255:0;
+		img.data[index*4+1] = active ?255:0;
+		img.data[index*4+2] = active ?255:0;
+		img.data[index*4+3] = 255;
+	}
+
+	// #endregion
+	// #region Generic Methods
+
+	function readFrameLength () {
+		return frames[index++] + frames[index++] * 256;
 	}
 
 	function onFrame () {
 		if (index >= frames.length) {
-			document.querySelector('button').hidden = false;
-			clearInterval(interval);
+			setPlayButtonVisibility(true);
+			app.clearInterval(interval);
 			return;
 		}
 
-		const end = frames[index++] + frames[index++] * 256 + index;
+		const time = Date.now();
+		const deltaFrames = Math.trunc((time - lastTime) / mspf);
+
+		if (deltaFrames < 1) return;
+
+		for (let i = 1; i < deltaFrames && index < frames.length; i++) {
+			index = readFrameLength() + index;
+		}
+
+		const end = readFrameLength() + index;
+		startFrame();
 
 		let active = false;
 		let pixelIndex = 0;
@@ -54,15 +100,20 @@
 			active = !active;
 		}
 
-		frame++;
-		statField.value = `${frame.toString().padStart(4, '0')}: ${index}/${frames.length} (${(index / frames.length * 100).toFixed(2)})%`;
-		ctx.putImageData(img, 0, 0);
+		frame += deltaFrames;
+		skippedFrames += deltaFrames - 1;
+		lastTime += deltaFrames * mspf;
+		endFrame();
 	}
 
 	function onInit () {
-		document.querySelector('button').hidden = true;
+		setPlayButtonVisibility(false);
 		index = 0;
 		frame = 0;
-		interval = setInterval('onFrame();', 1000 / fps);
+		skippedFrames = 0;
+		lastTime = Date.now();
+		interval = setInterval('onFrame();', mspf);
 	}
+
+	//#endregion
 </script>
