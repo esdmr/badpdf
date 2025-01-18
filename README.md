@@ -14,6 +14,7 @@ depth is not a concern, since the video is (converted to) black and white.
 
 - [UV][uv]
 - [GNU Make][make]
+- [FFmpeg][ffmpeg]
 - POSIX-compatible `/bin/sh`
 - [Git][git]
 
