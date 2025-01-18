@@ -49,6 +49,10 @@ The python script over at `frames/process_frames.py` loads each frame and conver
 them into black and white. Then, it encodes the run-length of the values.
 Finally, it does two lossy compressions on the RLE’d stream.
 
+Note: In v1, this script reorders the frame data according to a [Generalized
+Hilbert Curve][gilbert]. This improves the compression rate by one third of the
+original size (307 kB to 205 kB).
+
 The first is the “RLE Bleed-0” compression. Its goal is to reduce zero bytes
 after a full (255) run-length, by intentionally miscoloring the remaining
 non-full byte. This is only done at a certain threshold, as a larger miscolored,
@@ -59,6 +63,8 @@ rle:      0:512                         1:005 (2 segments)
 uint8:    0:255 1:000 0:255 1:000 0:002 1:005 (6 bytes)
 bleed-0:  0:255 1:000 0:255             1:007 (4 bytes)
 ```
+
+Note: “RLE Bleed-0” is no longer used in v1.
 
 The second is the “RLE Ridge” compression. Its goal is to reduce very short
 segments, by intentionally miscoloring that segment, thereby combining three
@@ -71,9 +77,11 @@ uint8: 0:255 1:000 0:100 1:001 0:050 (5 bytes)
 ridge: 0:255 1:000 0:151             (3 bytes)
 ```
 
+Note: The implementation of “RLE Ridge” skips every other consecutive ridge.
+In v1, the script applies this compression twice to compensate.
+
 The final frame data goes to the `frames/out/frames.bin` file. If you run the
-preview server, you can see how it will look like at `bad.html`. It is a port of
-`index.js` from Acrobat API into Web API.
+preview server, you can see how it will look like outside a PDF sandbox.
 
 The python script over at `generate.py` is a modified version of
 [PDFtris][pdftris]’s generator. It defines the page width and height in a
@@ -94,3 +102,4 @@ The output goes to `bad.pdf`.
 [ffmpeg]: https://www.ffmpeg.org/
 [make]: https://www.gnu.org/software/make/
 [git]: https://git-scm.com/
+[gilbert]: https://github.com/jakubcerveny/gilbert
