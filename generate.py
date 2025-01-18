@@ -153,7 +153,7 @@ PIXEL_OBJ = """
       0.5 0.5 0.5
     ]
   >>
-  /Border [ 0 0 1 ]
+  /Border [ 0 0 0 ]
   /P 16 0 R
   /Rect [
     ###RECT###
