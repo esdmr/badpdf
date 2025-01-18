@@ -1,3 +1,6 @@
 [submodule "badapple-frames"]
 	path = frames/src
 	url = https://github.com/Felixoofed/badapple-frames.git
+[submodule "gilbert"]
+	path = gilbert
+	url = https://github.com/jakubcerveny/gilbert.git
