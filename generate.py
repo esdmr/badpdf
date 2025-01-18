@@ -377,13 +377,8 @@ add_text(
 
 filled_pdf = PDF_FILE_TEMPLATE.replace("###FIELDS###", fields_text)
 
-with open("index.js", "r") as jsfile:
+with open("js/out/bad.js", "r") as jsfile:
     filled_pdf = filled_pdf.replace("###JAVASCRIPT###", jsfile.read())
-
-with open("frames/out/frames.bin", "rb") as txtfile:
-    filled_pdf = filled_pdf.replace(
-        "###FRAME_DATA###", b64encode(txtfile.read()).decode()
-    )
 
 filled_pdf = filled_pdf.replace(
     "###FIELD_LIST###", " ".join([f"{i} 0 R" for i in field_indexes])

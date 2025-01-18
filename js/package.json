@@ -1,0 +1,14 @@
+{
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#api": {
+			"pdf": "./pdf-api.ts",
+			"default": "./html-api.ts"
+		}
+	},
+	"devDependencies": {
+		"vite": "^6.0.6",
+		"vite-plugin-arraybuffer": "^0.0.8"
+	}
+}

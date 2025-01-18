@@ -13,18 +13,18 @@ depth is not a concern, since the video is (converted to) black and white.
 ## Requirement
 
 - [UV][uv]
-- [GNU Make][make]
+- [Node.JS][nodejs]
 - [FFmpeg][ffmpeg]
-- POSIX-compatible `/bin/sh`
 - [Git][git]
+- [GNU Make][make]
+- POSIX-compatible `/bin/sh`
 
 ## Building
 
 ```sh
 git clone esdmr/badpdf --recurse-submodules
 cd badpdf
-uv sync
-make bad.pdf
+make
 
 # Or, to run a preview server
 make preview

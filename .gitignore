@@ -5,3 +5,5 @@ bad.pdf
 out/
 __pycache__
 .python-version
+node_modules
+/index.js
