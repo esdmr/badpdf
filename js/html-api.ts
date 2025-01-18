@@ -3,6 +3,7 @@
 
 import options from '../frames/options.txt?raw';
 import frames from '../frames/out/frames.bin?uint8array&base64';
+import { d2xy } from '../gilbert/ports/gilbert.js';
 
 const [width, height, fps] = options.split('\n').map(Number);
 export const mspf = 1000 / fps;
@@ -15,6 +16,10 @@ const ctx = canvas.getContext('2d')!;
 const img = ctx.getImageData(0, 0, width, height);
 const status = document.querySelector('p')!;
 const play = document.querySelector('button')!;
+
+const indexMap = Array.from({length: width * height}, (_, i) => d2xy(i, width, height)).map(i => i.x + i.y * width);
+
+console.log(indexMap);
 
 export {frames};
 export const setInterval = globalThis.setInterval;
@@ -35,8 +40,8 @@ export function endFrame(index: number, frame: number, skippedFrames: number) {
 }
 
 export function setPixel(index: number, active: boolean) {
-	img.data[index * 4 + 0] = active ? 255 : 0;
-	img.data[index * 4 + 1] = active ? 255 : 0;
-	img.data[index * 4 + 2] = active ? 255 : 0;
-	img.data[index * 4 + 3] = 255;
+	img.data[indexMap[index] * 4 + 0] = active ? 255 : 0;
+	img.data[indexMap[index] * 4 + 1] = active ? 255 : 0;
+	img.data[indexMap[index] * 4 + 2] = active ? 255 : 0;
+	img.data[indexMap[index] * 4 + 3] = 255;
 }

@@ -3,6 +3,8 @@
 
 import options from '../frames/options.txt?raw';
 import frames from '../frames/out/frames.bin?uint8array&base64';
+import {d2xy} from '../gilbert/ports/gilbert.js';
+import type { Console } from '../types/console.js';
 
 const [width, height, fps] = options.split('\n').map(Number);
 export const mspf = 1000 / fps;
@@ -11,14 +13,15 @@ let statusField = getField('T_stat');
 const fields: Field[] = [];
 const fieldValues: boolean[] = [];
 
-for (let y = height - 1; y >= 0; y--) {
-	for (let x = 0; x < width; x++) {
-		fields.push(getField(`P_${x}_${y}`));
-		fieldValues.push(false);
-	}
+for (let d = 0; d < width * height; d++) {
+	const {x, y} = d2xy(d, width, height);
+	fields.push(getField(`P_${x}_${height - y - 1}`));
+	fieldValues.push(false);
 }
 
-app.execMenuItem('FitPage');
+try {
+	app.execMenuItem('FitPage');
+} catch {}
 
 export {frames};
 

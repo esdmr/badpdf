@@ -12,8 +12,14 @@ frames/out/build.txt: frames/src/badapple.mp4 frames/options.txt frames/create-f
 uv.lock: pyproject.toml
 	uv sync
 
-preview: frames/out/frames.bin js/pnpm-lock.yaml
+dev: frames/out/frames.bin js/pnpm-lock.yaml
 	cd js; corepack pnpm vite
+
+preview: js/out/index.html js/pnpm-lock.yaml
+	cd js; corepack pnpm vite preview
+
+js/out/index.html: frames/out/frames.bin frames/options.txt js/index.html js/index.ts js/html-api.ts js/pnpm-lock.yaml js/vite.config.ts
+	cd js; corepack pnpm vite build -m html
 
 js/out/bad.js: frames/out/frames.bin frames/options.txt js/index.ts js/pdf-api.ts js/pnpm-lock.yaml js/vite.config.ts
 	cd js; corepack pnpm vite build -m pdf
@@ -21,4 +27,4 @@ js/out/bad.js: frames/out/frames.bin frames/options.txt js/index.ts js/pdf-api.t
 js/pnpm-lock.yaml: js/package.json
 	cd js; pnpm i
 
-.PHONY: build preview
+.PHONY: build preview dev

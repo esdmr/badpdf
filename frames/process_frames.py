@@ -1,9 +1,12 @@
-from base64 import b64encode
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from collections import deque
 from itertools import groupby, islice
 from pathlib import Path
 from typing import Iterable
 from PIL import Image
+from gilbert.gilbert2d import gilbert2d
 
 
 def window[T](seq: Iterable[T], n=2):
@@ -22,7 +25,14 @@ def window[T](seq: Iterable[T], n=2):
             yield window
 
 
-def get_rle(data: list[int], values=2, max=255):
+def gilbert(data: list[int], width: int, height: int):
+    assert len(data) == width * height
+
+    for x, y in gilbert2d(width, height):
+        yield data[x + y * width]
+
+
+def get_rle(data: Iterable[int], values=2, max=255):
     next = 0
 
     for curr, it in groupby(data):
@@ -74,7 +84,13 @@ for file in sorted(Path("out").glob("*.png")):
     with Image.open(file, "r") as f:
         data = [int(i // 128) for i in f.convert("L").getdata()]
         rle = list(
-            apply_rle_ridge(apply_rle_bleed0(get_rle(data), max_bleed=8), max_ridge=1)
+            apply_rle_ridge(
+                apply_rle_ridge(
+                    get_rle(
+                        gilbert(data, f.width, f.height),
+                    ),
+                ),
+            )
         )
         # rle = list(get_rle(data))
         n = len(rle)
