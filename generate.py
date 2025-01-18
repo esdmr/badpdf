@@ -357,19 +357,38 @@ def add_text(label, name, x, y, width, height, js):
 add_button(
     "Play",
     "B_play",
-    GRID_OFF_X + (GRID_WIDTH * PX_SIZE) / 2 - 50,
-    GRID_OFF_Y + (GRID_HEIGHT * PX_SIZE) / 2 - 50,
+    GRID_OFF_X + (GRID_WIDTH * PX_SIZE) // 2 - 50,
+    GRID_OFF_Y + (GRID_HEIGHT * PX_SIZE) // 2 - 50,
     100,
     100,
     "onInit();",
 )
 
+add_button(
+    "Pause/Resume",
+    "B_pause_resume",
+    GRID_OFF_X,
+    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE,
+    GRID_WIDTH * PX_SIZE // 2,
+    20,
+    "onPauseResume();",
+)
+
+add_button(
+    "Next Frame",
+    "B_next_frame",
+    GRID_OFF_X + (GRID_WIDTH * PX_SIZE) // 2,
+    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE,
+    GRID_WIDTH * PX_SIZE // 2,
+    20,
+    "onNextFrame();",
+)
 
 add_text(
     "",
     "T_stat",
     GRID_OFF_X,
-    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE,
+    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE + 20,
     GRID_WIDTH * PX_SIZE,
     20,
     "",
@@ -378,7 +397,10 @@ add_text(
 filled_pdf = PDF_FILE_TEMPLATE.replace("###FIELDS###", fields_text)
 
 with open("js/out/bad.js", "r") as jsfile:
-    filled_pdf = filled_pdf.replace("###JAVASCRIPT###", "try{" + jsfile.read() + "}catch(error){app.alert(String(error))}")
+    filled_pdf = filled_pdf.replace(
+        "###JAVASCRIPT###",
+        "try{" + jsfile.read() + "}catch(error){app.alert(String(error))}",
+    )
 
 filled_pdf = filled_pdf.replace(
     "###FIELD_LIST###", " ".join([f"{i} 0 R" for i in field_indexes])
@@ -390,7 +412,7 @@ filled_pdf = filled_pdf.replace(
     "###PAGE_WIDTH###", f"{GRID_WIDTH * PX_SIZE + GRID_OFF_X * 2}"
 )
 filled_pdf = filled_pdf.replace(
-    "###PAGE_HEIGHT###", f"{GRID_HEIGHT * PX_SIZE + GRID_OFF_Y * 2 + 20}"
+    "###PAGE_HEIGHT###", f"{GRID_HEIGHT * PX_SIZE + GRID_OFF_Y * 2 + 40}"
 )
 
 with open("bad.pdf", "w") as pdffile:

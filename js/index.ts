@@ -15,16 +15,20 @@ import {
 declare global {
 	var onFrame: () => void;
 	var onInit: () => void;
+	var onNextFrame: () => void;
+	var onPauseResume: () => void;
 }
 
 let index = 0;
 let frame = 0;
 let skippedFrames = 0;
-let lastTime = 0;
-let interval = 0;
+let lastTime = -1;
+let interval = -1;
 
 globalThis.onFrame = onFrame;
 globalThis.onInit = onInit;
+globalThis.onNextFrame = onNextFrame;
+globalThis.onPauseResume = onPauseResume;
 
 function readFrameLength() {
 	return frames[index++] + frames[index++] * 256;
@@ -34,6 +38,8 @@ function onFrame() {
 	if (index >= frames.length) {
 		setPlayButtonVisibility(true);
 		clearInterval(interval);
+		lastTime = -1;
+		interval = -1;
 		return;
 	}
 
@@ -45,6 +51,15 @@ function onFrame() {
 	for (let i = 1; i < deltaFrames && index < frames.length; i++) {
 		index = readFrameLength() + index;
 	}
+
+	frame += deltaFrames - 1;
+	skippedFrames += deltaFrames - 1;
+	lastTime += deltaFrames * mspf;
+	onNextFrame();
+}
+
+function onNextFrame() {
+	if (lastTime < 0) return;
 
 	const end = readFrameLength() + index;
 	startFrame();
@@ -60,10 +75,20 @@ function onFrame() {
 		active = !active;
 	}
 
-	frame += deltaFrames;
-	skippedFrames += deltaFrames - 1;
-	lastTime += deltaFrames * mspf;
+	frame++;
 	endFrame(index, frame, skippedFrames);
+}
+
+function onPauseResume() {
+	if (lastTime < 0) return;
+
+	if (interval < 0) {
+		lastTime = Date.now();
+		interval = setInterval('onFrame();', mspf);
+	} else {
+		clearInterval(interval);
+		interval = -1;
+	}
 }
 
 function onInit() {
