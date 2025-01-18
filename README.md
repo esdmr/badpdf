@@ -72,7 +72,7 @@ segments together. This will diminish small details, so it is best to keep the
 threshold small.
 
 ```
-rle:   0:355 1:002 0:050             (3 segments)
+rle:   0:355             1:001 0:050 (3 segments)
 uint8: 0:255 1:000 0:100 1:001 0:050 (5 bytes)
 ridge: 0:255 1:000 0:151             (3 bytes)
 ```
