@@ -4,7 +4,7 @@ Most of this code originates from PDFtris’s `gengrid.py`.
 See: https://github.com/ThomasRinsma/pdftris/blob/0beca0117bb9412e95bfaebf0f84d09fd38620d0/gengrid.py
 """
 
-from base64 import b64encode
+from json import load
 
 
 PDF_FILE_TEMPLATE = """
@@ -268,11 +268,11 @@ endobj
 
 # p1 = PIXEL_OBJ.replace("###IDX###", "50 0").replace("###COLOR###","1 0 0").replace("###RECT###", "460 700 480 720")
 
-with open("frames/options.txt", "r") as optfile:
-    options = optfile.readlines()
-    GRID_WIDTH = int(options[0])
-    GRID_HEIGHT = int(options[1])
-    FPS = int(options[2])
+with open("frames/options.json", "r") as optfile:
+    options = load(optfile)
+    GRID_WIDTH = int(options["width"])
+    GRID_HEIGHT = int(options["height"])
+    FPS = int(options["fps"])
 
 PX_SIZE = 16
 GRID_OFF_X = 0

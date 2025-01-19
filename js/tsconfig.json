@@ -4,7 +4,8 @@
 		"moduleResolution": "Bundler",
 		"target": "ES2022",
 		"strict": true,
-		"noEmit": true
+		"noEmit": true,
+		"resolveJsonModule": true
 	},
 	"include": [
 		"*.ts"

@@ -1,8 +1,7 @@
-import options from '../frames/options.txt?raw';
+import {width, height, fps} from '../../frames/options.json';
 import frames from '../frames/out/frames.bin?uint8array&base64';
 import { d2xy } from '#gilbert';
 
-const [width, height, fps] = options.split('\n').map(Number);
 export const mspf = 1000 / fps;
 
 const canvas = document.querySelector('canvas')!;

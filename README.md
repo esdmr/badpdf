@@ -15,6 +15,7 @@ depth is not a concern, since the video is (converted to) black and white.
 - [UV][uv]
 - [Node.JS][nodejs]
 - [FFmpeg][ffmpeg]
+- [jq][jq]
 - [Git][git]
 - [GNU Make][make]
 - POSIX-compatible `/bin/sh`
@@ -104,3 +105,4 @@ The output goes to `bad.pdf`.
 [git]: https://git-scm.com/
 [gilbert]: https://github.com/jakubcerveny/gilbert
 [nodejs]: https://nodejs.org/
+[jq]: https://jqlang.github.io/jq/
