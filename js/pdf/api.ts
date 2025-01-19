@@ -24,11 +24,11 @@ try {
 
 export {frames};
 
-export function setInterval(fn: string, ms: number) {
+export function setInterval(fn: string, ms: number): unknown {
 	return app.setInterval(fn, ms);
 }
 
-export function clearInterval(i: number) {
+export function clearInterval(i: unknown) {
 	app.clearInterval(i);
 }
 

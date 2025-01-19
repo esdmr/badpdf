@@ -20,7 +20,7 @@ let index = 0;
 let frame = 0;
 let skippedFrames = 0;
 let lastTime = -1;
-let interval = -1;
+let interval: unknown;
 
 globalThis.onFrame = onFrame;
 globalThis.onInit = onInit;
@@ -79,7 +79,7 @@ function onNextFrame() {
 function onPauseResume() {
 	if (lastTime < 0) return;
 
-	if (interval < 0) {
+	if (interval === undefined) {
 		lastTime = Date.now();
 		interval = setInterval('onFrame();', mspf);
 	} else {

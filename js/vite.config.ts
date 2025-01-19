@@ -9,13 +9,13 @@ export default defineConfig(({mode}) => ({
 	},
 	build: {
 		rollupOptions: mode === 'pdf' ? {
-			input: 'index.ts',
+			input: 'shared/index.ts',
 			output: {
 				format: 'iife' as const,
 				entryFileNames: 'bad.js',
 			},
 		} : {
-			input: 'index.html',
+			input: 'html/index.html',
 		},
 		target: ['es2022'],
 		outDir: 'out',
@@ -27,7 +27,7 @@ export default defineConfig(({mode}) => ({
 			name: 'gilbert',
 			enforce: 'pre' as const,
 			resolveId (source, importer, options) {
-				if (source.endsWith('/gilbert.js')) return '\0gilbert';
+				if (source === '#gilbert') return '\0gilbert';
 			},
 			async load (id, options) {
 				if (id !== '\0gilbert') return;
