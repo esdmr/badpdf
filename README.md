@@ -54,18 +54,18 @@ Note: In v1, this script reorders the frame data according to a [Generalized
 Hilbert Curve][gilbert]. This improves the compression rate by one third of the
 original size (307 kB to 205 kB).
 
-The first is the “RLE Bleed-0” compression. Its goal is to reduce zero bytes
+The first is the “RLE Bleed” compression. Its goal is to reduce zero bytes
 after a full (255) run-length, by intentionally miscoloring the remaining
 non-full byte. This is only done at a certain threshold, as a larger miscolored,
 vertical streak might be distracting.
 
 ```
-rle:      0:512                         1:005 (2 segments)
-uint8:    0:255 1:000 0:255 1:000 0:002 1:005 (6 bytes)
-bleed-0:  0:255 1:000 0:255             1:007 (4 bytes)
+rle:    0:512                         1:005 (2 segments)
+uint8:  0:255 1:000 0:255 1:000 0:002 1:005 (6 bytes)
+bleed:  0:255 1:000 0:255             1:007 (4 bytes)
 ```
 
-Note: “RLE Bleed-0” is no longer used in v1.
+Note: “RLE Bleed” is no longer used in v1.
 
 The second is the “RLE Ridge” compression. Its goal is to reduce very short
 segments, by intentionally miscoloring that segment, thereby combining three

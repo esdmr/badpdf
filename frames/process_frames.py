@@ -62,7 +62,7 @@ def apply_rle_ord(data: Iterable[tuple[int, int]], *values: int):
         queue.append(i)
 
 
-def apply_rle_bleed0(rle: Iterable[int], max=255, max_bleed=255):
+def apply_rle_bleed(rle: Iterable[int], max=255, max_bleed=255):
     skip = 0
 
     for i in window(rle, 3):
@@ -105,7 +105,7 @@ for file in sorted(Path("out").glob("*.png")):
         data = apply_rle_ord(data)
 
         if not options["gilbert"]:
-            data = apply_rle_bleed0(data)
+            data = apply_rle_bleed(data)
 
         for _ in range(2):
             data = apply_rle_ridge(data)
