@@ -1,12 +1,12 @@
-declare type AForm = import('../types/aform.js').AForm;
-declare type App = import('../types/app.js').App;
-declare type Color = import('../types/color.js').Color;
-declare type Console = import('../types/console.js').Console;
-declare type Doc = import('../types/doc.js').Doc;
-declare type Field = import('../types/field.js').Field;
-declare type CheckboxField = import('../types/field.js').CheckboxField;
-declare type RadioButtonField = import('../types/field.js').RadioButtonField;
-declare type FullScreen = import('../types/fullscreen.js').FullScreen;
+declare type AForm = import('../../types/aform.js').AForm;
+declare type App = import('../../types/app.js').App;
+declare type Color = import('../../types/color.js').Color;
+declare type Console = import('../../types/console.js').Console;
+declare type Doc = import('../../types/doc.js').Doc;
+declare type Field = import('../../types/field.js').Field;
+declare type CheckboxField = import('../../types/field.js').CheckboxField;
+declare type RadioButtonField = import('../../types/field.js').RadioButtonField;
+declare type FullScreen = import('../../types/fullscreen.js').FullScreen;
 
 declare var app: App;
 declare var console: Console;

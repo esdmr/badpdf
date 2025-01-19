@@ -1,6 +1,3 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="es2020" />
-
 import {
 	mspf,
 	frames,

@@ -3,13 +3,10 @@
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"target": "ES2022",
-		"checkJs": true,
 		"strict": true,
-		"lib": ["es2022"]
+		"noEmit": true
 	},
-	"exclude": [
-		"node_modules",
-		"**/node_modules/*",
-		"out/*"
+	"include": [
+		"*.ts"
 	]
 }

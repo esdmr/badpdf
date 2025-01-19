@@ -1,0 +1,13 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"lib": ["ES2022"],
+		"customConditions": ["pdf"],
+		"types": ["vite/client"]
+	},
+	"include": [
+		"**/*.ts",
+		"../shared/**/*.ts",
+		"../../gilbert/ports/gilbert.js"
+	]
+}

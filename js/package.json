@@ -3,12 +3,25 @@
 	"type": "module",
 	"imports": {
 		"#api": {
-			"pdf": "./pdf-api.ts",
-			"default": "./html-api.ts"
+			"types": "./shared/api.d.ts",
+			"pdf": "./pdf/api.ts",
+			"default": "./html/api.ts"
+		},
+		"#gilbert": {
+			"types": "./shared/gilbert.d.ts",
+			"default": "../../gilbert/ports/gilbert.js"
 		}
+	},
+	"scripts": {
+		"check:root": "tsc -p .",
+		"check:shared": "tsc -p shared",
+		"check:pdf": "tsc -p pdf",
+		"check:html": "tsc -p html",
+		"check": "pnpm run check:root && pnpm run check:shared && pnpm run check:pdf && pnpm run check:html"
 	},
 	"devDependencies": {
 		"@types/node": "20",
+		"typescript": "^5.7.3",
 		"vite": "^6.0.6",
 		"vite-plugin-arraybuffer": "^0.0.8"
 	}

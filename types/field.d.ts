@@ -130,8 +130,7 @@ export class RadioButtonField extends Field {
     _radioIds: any[];
     _radioActions: any[];
     _hasBeenInitialized: boolean;
-    set _siblings(_: any[]);
-    get _siblings(): any[];
+    _siblings: any[];
     _getExportValue(state: any): any;
 }
 import { PDFObject } from "./pdf_object.js";

@@ -1,10 +1,6 @@
-/// <reference path="./vite-env.d.ts" />
-/// <reference path="./pdf-env.d.ts" />
-
 import options from '../frames/options.txt?raw';
 import frames from '../frames/out/frames.bin?uint8array&base64';
-import {d2xy} from '../gilbert/ports/gilbert.js';
-import type { Console } from '../types/console.js';
+import {d2xy} from '#gilbert';
 
 const [width, height, fps] = options.split('\n').map(Number);
 export const mspf = 1000 / fps;
@@ -18,6 +14,10 @@ for (let d = 0; d < width * height; d++) {
 	fields.push(getField(`P_${x}_${height - y - 1}`));
 	fieldValues.push(false);
 }
+
+const {rect} = statusField;
+statusField.rect = [rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100)];
+statusField.rotation = Math.trunc(Math.random() * 4) * 90;
 
 try {
 	app.execMenuItem('FitPage');

@@ -1,0 +1,15 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"customConditions": ["html"],
+		"types": ["vite/client"]
+	},
+	"include": [
+		"**/*.ts",
+		"../shared/**/*.ts",
+		"../../gilbert/ports/gilbert.js"
+	],
+	"exclude": [
+		"../shared/dom.d.ts"
+	]
+}

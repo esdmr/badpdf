@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-
 declare module '*?arraybuffer' {
 	const src: ArrayBuffer
 	export default src
