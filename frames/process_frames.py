@@ -34,24 +34,32 @@ def gilbert(data: list[int], width: int, height: int):
         yield data[x + y * width]
 
 
-def get_rle(data: Iterable[int], values=2, max=255):
-    next = 0
-
+def apply_rle(data: Iterable[int]):
     for curr, it in groupby(data):
-        for _ in range((curr - next) % values):
+        yield (curr, sum(1 for _ in it))
+
+
+def apply_rle_u8(data: Iterable[tuple[int, int]]):
+    for i, n in data:
+        for _ in range(n // 0xFF):
+            yield (i, 0xFF)
+
+        yield (i, n % 0xFF)
+
+
+def apply_rle_ord(data: Iterable[tuple[int, int]], *values: int):
+    assert values
+    queue = deque(values, maxlen=len(values))
+
+    for i, n in data:
+        assert i in values
+
+        while queue[0] != i:
             yield 0
+            queue.append(queue[0])
 
-        n = sum(1 for _ in it)
-
-        for _ in range(n // max):
-            yield max
-
-            for _ in range(values - 1):
-                yield 0
-
-        yield n % max
-
-        next = (curr + 1) % values
+        yield n
+        queue.append(i)
 
 
 def apply_rle_bleed0(rle: Iterable[int], max=255, max_bleed=255):
@@ -92,7 +100,9 @@ for file in sorted(Path("out").glob("*.png")):
         if options["gilbert"]:
             data = gilbert(data, f.width, f.height)
 
-        data = get_rle(data)
+        data = apply_rle(data)
+        data = apply_rle_u8(data)
+        data = apply_rle_ord(data)
 
         if not options["gilbert"]:
             data = apply_rle_bleed0(data)
