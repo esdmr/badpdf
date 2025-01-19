@@ -1,5 +1,5 @@
-import {width, height, fps} from '../../frames/options.json';
-import frames from '../frames/out/frames.bin?uint8array&base64';
+import {width, height, fps, gilbert} from '../../frames/options.json';
+import frames from '../../frames/out/frames.bin?uint8array&base64';
 import {d2xy} from '#gilbert';
 
 export const mspf = 1000 / fps;
@@ -9,14 +9,14 @@ const fields: Field[] = [];
 const fieldValues: boolean[] = [];
 
 for (let d = 0; d < width * height; d++) {
-	const {x, y} = d2xy(d, width, height);
+	const {x, y} = gilbert ? d2xy(d, width, height) : {
+		x: d % width,
+		y: Math.trunc(d / width),
+	};
+
 	fields.push(getField(`P_${x}_${height - y - 1}`));
 	fieldValues.push(false);
 }
-
-const {rect} = statusField;
-statusField.rect = [rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100), rect[0] + Math.trunc(Math.random() * 200 - 100)];
-statusField.rotation = Math.trunc(Math.random() * 4) * 90;
 
 try {
 	app.execMenuItem('FitPage');

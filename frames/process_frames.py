@@ -1,4 +1,5 @@
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from collections import deque
@@ -6,6 +7,7 @@ from itertools import groupby, islice
 from pathlib import Path
 from typing import Iterable
 from PIL import Image
+from json import load
 from gilbert.gilbert2d import gilbert2d
 
 
@@ -78,25 +80,32 @@ def apply_rle_ridge(rle: Iterable[int], max=255, max_ridge=1):
             skip = 2
 
 
+with open("options.json", "r") as f:
+    options = load(f)
+
 frame_data = bytearray()
 
 for file in sorted(Path("out").glob("*.png")):
     with Image.open(file, "r") as f:
         data = [int(i // 128) for i in f.convert("L").getdata()]
-        rle = list(
-            apply_rle_ridge(
-                apply_rle_ridge(
-                    get_rle(
-                        gilbert(data, f.width, f.height),
-                    ),
-                ),
-            )
-        )
-        # rle = list(get_rle(data))
-        n = len(rle)
+
+        if options["gilbert"]:
+            data = gilbert(data, f.width, f.height)
+
+        data = get_rle(data)
+
+        if not options["gilbert"]:
+            data = apply_rle_bleed0(data)
+
+        for _ in range(2):
+            data = apply_rle_ridge(data)
+
+        data = list(data)
+        n = len(data)
+
         frame_data.append(n % 256)
         frame_data.append(n // 256)
-        frame_data.extend(rle)
+        frame_data.extend(data)
 
 with open("out/frames.bin", "wb") as f:
     f.write(frame_data)

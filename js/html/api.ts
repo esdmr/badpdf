@@ -1,5 +1,5 @@
-import {width, height, fps} from '../../frames/options.json';
-import frames from '../frames/out/frames.bin?uint8array&base64';
+import {width, height, fps, gilbert} from '../../frames/options.json';
+import frames from '../../frames/out/frames.bin?uint8array&base64';
 import { d2xy } from '#gilbert';
 
 export const mspf = 1000 / fps;
@@ -13,7 +13,11 @@ const img = ctx.getImageData(0, 0, width, height);
 const status = document.querySelector('p')!;
 const play = document.querySelector('button')!;
 
-const indexMap = Array.from({length: width * height}, (_, i) => d2xy(i, width, height)).map(i => i.x + i.y * width);
+const indexMap = Array.from({length: width * height}, (_, i) => {
+	if (!gilbert) return i;
+	const {x, y} = d2xy(i, width, height)
+	return x + y * width;
+});
 
 console.log(indexMap);
 
