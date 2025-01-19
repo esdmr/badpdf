@@ -89,24 +89,6 @@ stream
 endstream
 endobj
 
-
-18 0 obj
-<<
-  /JS 43 0 R
-  /S /JavaScript
->>
-endobj
-
-
-43 0 obj
-<< >>
-stream
-
-
-
-endstream
-endobj
-
 trailer
 <<
   /Root 1 0 R
@@ -122,13 +104,13 @@ PLAYING_FIELD_OBJ = """
   /Ff 1
   /MK <<
     /BG [
-      0.8
+      ###COLOR###
     ]
     /BC [
       0 0 0
     ]
   >>
-  /Border [ 0 0 1 ]
+  /Border [ 0 0 0 ]
   /P 16 0 R
   /Rect [
     ###RECT###
@@ -150,7 +132,7 @@ PIXEL_OBJ = """
       ###COLOR###
     ]
     /BC [
-      0.5 0.5 0.5
+      0 0 0
     ]
   >>
   /Border [ 0 0 0 ]
@@ -173,7 +155,7 @@ BUTTON_AP_STREAM = """
   /Matrix [ 1.0 0.0 0.0 1.0 0.0 0.0]
   /Resources <<
     /Font <<
-      /HeBo 10 0 R
+      /Courier 10 0 R
     >>
     /ProcSet [ /PDF /Text ]
   >>
@@ -191,7 +173,7 @@ q
 W
 n
 BT
-/HeBo 12 Tf
+/Courier 12 Tf
 0 g
 10 8 Td
 (###TEXT###) Tj
@@ -266,154 +248,185 @@ endstream
 endobj
 """
 
-# p1 = PIXEL_OBJ.replace("###IDX###", "50 0").replace("###COLOR###","1 0 0").replace("###RECT###", "460 700 480 720")
 
-with open("frames/options.json", "r") as optfile:
-    options = load(optfile)
+def guard_script(js: str):
+    return "try{" + js + "}catch(error){app.alert(String(error))}"
+
+
+def format(src: str, **kw: str | int | float):
+    for k, v in kw.items():
+        src = src.replace(f"###{k.upper()}###", str(v))
+
+    return src
+
+
+def add_field(field: str, **kw: str | int | float):
+    global fields_text, field_indexes, obj_idx_ctr
+
+    kw.setdefault("idx", f"{obj_idx_ctr} 0")
+
+    fields_text += format(field, **kw)
+    field_indexes.append(obj_idx_ctr)
+    obj_idx_ctr += 1
+
+    return str(kw["idx"])
+
+
+def add_button(
+    label: str,
+    name: str | None,
+    x: int | float,
+    y: int | float,
+    width: int | float,
+    height: int | float,
+    js: str | None,
+):
+    script_idx = none_script_idx if js is None else add_field(STREAM_OBJ, content=js)
+
+    ap_idx = add_field(BUTTON_AP_STREAM, text=label, width=width, height=height)
+
+    return add_field(
+        BUTTON_OBJ,
+        script_idx=script_idx,
+        ap_idx=ap_idx,
+        label=label,
+        name=name if name else f"B_{obj_idx_ctr}",
+        rect=f"{x} {y} {x + width} {y + height}",
+    )
+
+
+def add_text(
+    label: str,
+    name: str | None,
+    x: int | float,
+    y: int | float,
+    width: int | float,
+    height: int | float,
+    js: str | None,
+):
+    script_idx = none_script_idx if js is None else add_field(STREAM_OBJ, content=js)
+
+    return add_field(
+        TEXT_OBJ,
+        script_idx=script_idx,
+        label=label,
+        name=name if name else f"T_{obj_idx_ctr}",
+        rect=f"{x} {y} {x + width} {y + height}",
+    )
+
+
+with open("frames/options.json", "r") as f:
+    options = load(f)
     GRID_WIDTH = int(options["width"])
     GRID_HEIGHT = int(options["height"])
     FPS = int(options["fps"])
+    IN_ROWS = bool(options["rows"])
 
-PX_SIZE = 16
+
+if IN_ROWS:
+    PX_WIDTH = 10
+    PX_HEIGHT = 16
+    PX_HEIGHT_OVERLAY = 8
+else:
+    PX_WIDTH = 16
+    PX_HEIGHT = 16
+    PX_HEIGHT_OVERLAY = 0
+
+GRID_AREA_WIDTH = GRID_WIDTH * PX_WIDTH
+GRID_AREA_HEIGHT = GRID_HEIGHT * (PX_HEIGHT - PX_HEIGHT_OVERLAY) + PX_HEIGHT_OVERLAY
 GRID_OFF_X = 0
 GRID_OFF_Y = 0
 
 fields_text = ""
 field_indexes = []
 obj_idx_ctr = 50
+none_script_idx = add_field(STREAM_OBJ, content="")
 
 
-def add_field(field):
-    global fields_text, field_indexes, obj_idx_ctr
-    fields_text += field
-    field_indexes.append(obj_idx_ctr)
-    obj_idx_ctr += 1
+if not IN_ROWS:
+    add_field(
+        PLAYING_FIELD_OBJ,
+        color="1",
+        rect=f"{GRID_OFF_X} {GRID_OFF_Y} {GRID_OFF_X+GRID_WIDTH*PX_WIDTH} {GRID_OFF_Y+GRID_HEIGHT*PX_HEIGHT}",
+    )
 
-
-# Playing field outline
-playing_field = PLAYING_FIELD_OBJ
-playing_field = playing_field.replace("###IDX###", f"{obj_idx_ctr} 0")
-playing_field = playing_field.replace(
-    "###RECT###",
-    f"{GRID_OFF_X} {GRID_OFF_Y} {GRID_OFF_X+GRID_WIDTH*PX_SIZE} {GRID_OFF_Y+GRID_HEIGHT*PX_SIZE}",
-)
-add_field(playing_field)
-
-for x in range(GRID_WIDTH):
-    for y in range(GRID_HEIGHT):
-        # Build object
-        pixel = PIXEL_OBJ
-        pixel = pixel.replace("###IDX###", f"{obj_idx_ctr} 0")
-        c = [0, 0, 0]
-        pixel = pixel.replace("###COLOR###", f"{c[0]} {c[1]} {c[2]}")
-        pixel = pixel.replace(
-            "###RECT###",
-            f"{GRID_OFF_X+x*PX_SIZE} {GRID_OFF_Y+y*PX_SIZE} {GRID_OFF_X+x*PX_SIZE+PX_SIZE} {GRID_OFF_Y+y*PX_SIZE+PX_SIZE}",
+for y in range(GRID_HEIGHT):
+    if IN_ROWS:
+        add_text(
+            "",
+            f"R_{y}",
+            0,
+            GRID_OFF_Y + y * (PX_HEIGHT - PX_HEIGHT_OVERLAY),
+            GRID_AREA_WIDTH,
+            PX_HEIGHT,
+            None
         )
-        pixel = pixel.replace("###X###", f"{x}")
-        pixel = pixel.replace("###Y###", f"{y}")
+        continue
 
-        add_field(pixel)
-
-
-def add_button(label, name, x, y, width, height, js):
-    script = STREAM_OBJ
-    script = script.replace("###IDX###", f"{obj_idx_ctr} 0")
-    script = script.replace("###CONTENT###", js)
-    add_field(script)
-
-    ap_stream = BUTTON_AP_STREAM
-    ap_stream = ap_stream.replace("###IDX###", f"{obj_idx_ctr} 0")
-    ap_stream = ap_stream.replace("###TEXT###", label)
-    ap_stream = ap_stream.replace("###WIDTH###", f"{width}")
-    ap_stream = ap_stream.replace("###HEIGHT###", f"{height}")
-    add_field(ap_stream)
-
-    button = BUTTON_OBJ
-    button = button.replace("###IDX###", f"{obj_idx_ctr} 0")
-    button = button.replace("###SCRIPT_IDX###", f"{obj_idx_ctr-2} 0")
-    button = button.replace("###AP_IDX###", f"{obj_idx_ctr-1} 0")
-    # button = button.replace("###LABEL###", label)
-    button = button.replace("###NAME###", name if name else f"B_{obj_idx_ctr}")
-    button = button.replace("###RECT###", f"{x} {y} {x + width} {y + height}")
-    add_field(button)
-
-
-def add_text(label, name, x, y, width, height, js):
-    script = STREAM_OBJ
-    script = script.replace("###IDX###", f"{obj_idx_ctr} 0")
-    script = script.replace("###CONTENT###", js)
-    add_field(script)
-
-    text = TEXT_OBJ
-    text = text.replace("###IDX###", f"{obj_idx_ctr} 0")
-    text = text.replace("###SCRIPT_IDX###", f"{obj_idx_ctr-1} 0")
-    text = text.replace("###LABEL###", label)
-    text = text.replace("###NAME###", name)
-    text = text.replace("###RECT###", f"{x} {y} {x + width} {y + height}")
-    add_field(text)
+    for x in range(GRID_WIDTH):
+        add_field(
+            PIXEL_OBJ,
+            color="0",
+            rect=f"{GRID_OFF_X+x*PX_WIDTH} {GRID_OFF_Y+y*PX_HEIGHT} {GRID_OFF_X+x*PX_WIDTH+PX_WIDTH} {GRID_OFF_Y+y*PX_HEIGHT+PX_HEIGHT}",
+            x=x,
+            y=y,
+        )
 
 
 add_button(
     "Play",
     "B_play",
-    GRID_OFF_X + (GRID_WIDTH * PX_SIZE) // 2 - 50,
-    GRID_OFF_Y + (GRID_HEIGHT * PX_SIZE) // 2 - 50,
+    GRID_OFF_X + GRID_AREA_WIDTH // 2 - 50,
+    GRID_OFF_Y + GRID_AREA_HEIGHT // 2 - 50,
     100,
     100,
-    "onInit();",
+    guard_script("onInit();"),
 )
 
 add_button(
     "Pause/Resume",
     "B_pause_resume",
     GRID_OFF_X,
-    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE,
-    GRID_WIDTH * PX_SIZE // 2,
+    GRID_OFF_Y + GRID_AREA_HEIGHT,
+    GRID_AREA_WIDTH // 2,
     20,
-    "onPauseResume();",
+    guard_script("onPauseResume();"),
 )
 
 add_button(
     "Next Frame",
     "B_next_frame",
-    GRID_OFF_X + (GRID_WIDTH * PX_SIZE) // 2,
-    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE,
-    GRID_WIDTH * PX_SIZE // 2,
+    GRID_OFF_X + GRID_AREA_WIDTH // 2,
+    GRID_OFF_Y + GRID_AREA_HEIGHT,
+    GRID_AREA_WIDTH // 2,
     20,
-    "onNextFrame();",
+    guard_script("onNextFrame();"),
 )
 
 add_text(
     "",
     "T_stat",
     GRID_OFF_X,
-    GRID_OFF_Y + GRID_HEIGHT * PX_SIZE + 20,
-    GRID_WIDTH * PX_SIZE,
+    GRID_OFF_Y + GRID_AREA_HEIGHT + 20,
+    GRID_AREA_WIDTH,
     20,
     "",
 )
 
-filled_pdf = PDF_FILE_TEMPLATE.replace("###FIELDS###", fields_text)
+with open("js/out/bad.js", "r") as f:
+    pdf_js = f.read()
 
-with open("js/out/bad.js", "r") as jsfile:
-    filled_pdf = filled_pdf.replace(
-        "###JAVASCRIPT###",
-        "try{" + jsfile.read() + "}catch(error){app.alert(String(error))}",
-    )
-
-filled_pdf = filled_pdf.replace(
-    "###FIELD_LIST###", " ".join([f"{i} 0 R" for i in field_indexes])
-)
-filled_pdf = filled_pdf.replace("###GRID_WIDTH###", f"{GRID_WIDTH}")
-filled_pdf = filled_pdf.replace("###GRID_HEIGHT###", f"{GRID_HEIGHT}")
-filled_pdf = filled_pdf.replace("###FPS###", f"{FPS}")
-filled_pdf = filled_pdf.replace(
-    "###PAGE_WIDTH###", f"{GRID_WIDTH * PX_SIZE + GRID_OFF_X * 2}"
-)
-filled_pdf = filled_pdf.replace(
-    "###PAGE_HEIGHT###", f"{GRID_HEIGHT * PX_SIZE + GRID_OFF_Y * 2 + 40}"
+filled_pdf = format(
+    PDF_FILE_TEMPLATE,
+    fields=fields_text,
+    javascript=guard_script(pdf_js),
+    field_list=" ".join([f"{i} 0 R" for i in field_indexes]),
+    grid_width=GRID_WIDTH,
+    grid_height=GRID_HEIGHT,
+    fps=FPS,
+    page_width=GRID_AREA_WIDTH + GRID_OFF_X * 2,
+    page_height=GRID_AREA_HEIGHT + GRID_OFF_Y * 2 + 40,
 )
 
-with open("bad.pdf", "w") as pdffile:
-    pdffile.write(filled_pdf)
+with open("bad.pdf", "w") as f:
+    f.write(filled_pdf)

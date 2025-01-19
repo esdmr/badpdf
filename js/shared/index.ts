@@ -77,7 +77,10 @@ function onNextFrame() {
 }
 
 function onPauseResume() {
-	if (lastTime < 0) return;
+	if (lastTime < 0) {
+		onInit();
+		return;
+	}
 
 	if (interval === undefined) {
 		lastTime = Date.now();
@@ -94,5 +97,5 @@ function onInit() {
 	frame = 0;
 	skippedFrames = 0;
 	lastTime = Date.now();
-	interval = setInterval('onFrame();', mspf);
+	interval = setInterval('try{onFrame();}catch(error){app.alert(String(error))}	', mspf);
 }
