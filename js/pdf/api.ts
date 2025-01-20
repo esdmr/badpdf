@@ -5,36 +5,32 @@ import {d2xy} from '#gilbert';
 
 export const mspf = 1000 / fps;
 
-let statusField = getField('T_stat');
-const fields: Field[] = [];
-const fieldValues: boolean[] = [];
-const rowValues: string[][] = [];
-const indexMap: {x: number, y: number, i: number}[] = [];
-const length = width * height;
+const statusField = getField('T_stat');
+const fields: Field[][] = [];
+const fieldValues: string[][] = [];
 
-for (let i = 0; i < length; i++) {
-	if (gilbert) {
-		const result = d2xy(i, width, height);
-		indexMap.push({...result, i: result.x + result.y * width});
-	} else {
-		indexMap.push({
-			x: i % width,
-			y: Math.trunc(i / width),
-			i,
-		});
-	}
-}
+const indexMap = Array.from(
+	{length: width * height},
+	(_, i) => gilbert ? d2xy(i, width, height) : {
+		x: i % width,
+		y: Math.trunc(i / width),
+	},
+);
 
 if (rows) {
 	for (let y = 0; y < height; y++) {
-		fields.push(getField(`R_${height - y - 1}`));
-		rowValues.push(Array.from({length: width}, () => char0));
+		fields.push([getField(`R_${height - y - 1}`)]);
+		fieldValues.push(Array.from({length: width}, () => char0));
 	}
 } else {
-	for (let i = 0; i < length; i++) {
-		const {x, y} = indexMap[i];
-		fields.push(getField(`P_${x}_${height - y - 1}`));
-		fieldValues.push(false);
+	for (let y = 0; y < height; y++) {
+		const row: Field[] = [];
+		fields.push(row);
+		fieldValues.push(Array.from({length: width}, () => char0));
+
+		for (let x = 0; x < width; x++) {
+			row.push(getField(`P_${x}_${height - y - 1}`));
+		}
 	}
 }
 
@@ -63,7 +59,7 @@ export function startFrame() {
 export function endFrame(index: number, frame: number, skippedFrames: number) {
 	if (rows) {
 		for (let y = 0; y < height; y++) {
-			fields[y].value = rowValues[y].join('');
+			fields[y][0].value = fieldValues[y].join('');
 		}
 	}
 
@@ -73,12 +69,12 @@ export function endFrame(index: number, frame: number, skippedFrames: number) {
 }
 
 export function setPixel(index: number, active: boolean) {
-	const {x, y, i} = indexMap[index];
+	const {x, y} = indexMap[index];
+	const char = active ? char1 : char0;
 
-	if (rows) {
-		rowValues[y][x] = active ? char1 : char0;
-	} else if (fieldValues[i] !== active) {
-		fields[i].hidden = active;
-		fieldValues[i] = active;
+	if (!rows && fieldValues[y][x] !== char) {
+		fields[y][x].hidden = active;
 	}
+
+	fieldValues[y][x] = char;
 }
