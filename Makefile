@@ -3,7 +3,7 @@ build: bad.pdf
 bad.pdf: frames/options.json frames/ffmpeg.json generate.py js/out/bad.js uv.lock
 	uv run generate.py
 
-frames/out/frames.bin: frames/out/build.txt frames/options.json frames/process_frames.py uv.lock
+frames/out/frames.bin: frames/out/build.txt frames/options.json frames/ffmpeg.json frames/process_frames.py uv.lock
 	cd frames; uv run process_frames.py
 
 frames/out/build.txt: frames/src/badapple.mp4 frames/ffmpeg.json frames/create-frames.sh

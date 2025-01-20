@@ -29,10 +29,15 @@ def deque_set[T](i: deque[T], *values: T):
     i.extend(values)
 
 
-def gilbert(data: list[int], width: int, height: int):
+def gilbert(
+    data: list[int],
+    width: int,
+    height: int,
+    cache: Iterable[tuple[int, int]] | None = None,
+):
     assert len(data) == width * height
 
-    for x, y in gilbert2d(width, height):
+    for x, y in cache or gilbert2d(width, height):
         yield data[int(x + y * width)]
 
 
@@ -84,14 +89,23 @@ with open("options.json", "r") as f:
     options = load(f)
     GILBERT = bool(options["gilbert"])
 
+with open("ffmpeg.json", "r") as f:
+    ffmpeg_options = load(f)
+    WIDTH = int(ffmpeg_options["width"])
+    HEIGHT = int(ffmpeg_options["height"])
+
 frame_data = bytearray()
+gilbert_cache = list(gilbert2d(WIDTH, HEIGHT)) if GILBERT else None
 
 for file in sorted(Path("out").glob("*.png")):
     with Image.open(file, "r") as f:
+        assert f.width == WIDTH
+        assert f.height == HEIGHT
+
         data = [int(i) // 128 for i in f.convert("L").getdata()]
 
         if GILBERT:
-            data = gilbert(data, f.width, f.height)
+            data = gilbert(data, f.width, f.height, gilbert_cache)
 
         data = apply_rle(data)
         data = apply_rle_u8(data)
