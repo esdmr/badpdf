@@ -36,7 +36,7 @@ function onFrame() {
 		setPlayButtonVisibility(true);
 		clearInterval(interval);
 		lastTime = -1;
-		interval = -1;
+		interval = undefined;
 		return;
 	}
 
@@ -87,7 +87,7 @@ function onPauseResume() {
 		interval = setInterval('onFrame();', mspf);
 	} else {
 		clearInterval(interval);
-		interval = -1;
+		interval = undefined;
 	}
 }
 
