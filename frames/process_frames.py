@@ -82,6 +82,7 @@ def apply_rle_ridge(rle: Iterable[int], max=255, max_ridge=1):
 
 with open("options.json", "r") as f:
     options = load(f)
+    GILBERT = bool(options["gilbert"])
 
 frame_data = bytearray()
 
@@ -89,14 +90,14 @@ for file in sorted(Path("out").glob("*.png")):
     with Image.open(file, "r") as f:
         data = [int(i) // 128 for i in f.convert("L").getdata()]
 
-        if options["gilbert"]:
+        if GILBERT:
             data = gilbert(data, f.width, f.height)
 
         data = apply_rle(data)
         data = apply_rle_u8(data)
         data = apply_rle_ord(data, 0, 1)
 
-        if not options["gilbert"]:
+        if not GILBERT:
             data = apply_rle_bleed(data)
 
         data = apply_rle_ridge(data)

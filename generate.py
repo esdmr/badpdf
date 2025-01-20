@@ -317,11 +317,13 @@ def add_text(
 
 with open("frames/options.json", "r") as f:
     options = load(f)
-    GRID_WIDTH = int(options["width"])
-    GRID_HEIGHT = int(options["height"])
-    FPS = int(options["fps"])
     IN_ROWS = bool(options["rows"])
 
+with open("frames/ffmpeg.json", "r") as f:
+    ffmpeg_options = load(f)
+    GRID_WIDTH = int(ffmpeg_options["width"])
+    GRID_HEIGHT = int(ffmpeg_options["height"])
+    FPS = int(ffmpeg_options["fps"])
 
 if IN_ROWS:
     PX_WIDTH = 10

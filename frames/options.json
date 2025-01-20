@@ -1,7 +1,4 @@
 {
-	"width": 64,
-	"height": 48,
-	"fps": 12,
 	"gilbert": true,
 	"rows": false,
 	"char0": "bb",

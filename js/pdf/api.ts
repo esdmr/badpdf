@@ -1,4 +1,5 @@
-import {width, height, fps, gilbert, rows, char0, char1} from '../../frames/options.json';
+import {gilbert, rows, char0, char1} from '../../frames/options.json';
+import {width, height, fps} from '../../frames/ffmpeg.json';
 import frames from '../../frames/out/frames.bin?uint8array&base64';
 import {d2xy} from '#gilbert';
 
