@@ -9,7 +9,7 @@ const canvas = document.querySelector('canvas')!;
 canvas.width = width;
 canvas.height = height;
 
-const ctx = canvas.getContext('2d')!;
+const ctx = canvas.getContext('2d', {alpha: false})!;
 const img = ctx.getImageData(0, 0, width, height);
 const status = document.querySelector('p')!;
 const play = document.querySelector('button')!;
@@ -44,5 +44,4 @@ export function setPixel(index: number, active: boolean) {
 	img.data[indexMap[index] * 4 + 0] = active ? 255 : 0;
 	img.data[indexMap[index] * 4 + 1] = active ? 255 : 0;
 	img.data[indexMap[index] * 4 + 2] = active ? 255 : 0;
-	img.data[indexMap[index] * 4 + 3] = 255;
 }
