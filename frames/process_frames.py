@@ -3,7 +3,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from collections import deque
-from itertools import groupby, islice
+from itertools import groupby
 from pathlib import Path
 from typing import Iterable
 from PIL import Image
@@ -12,26 +12,28 @@ from gilbert.gilbert2d import gilbert2d
 
 
 def window[T](seq: Iterable[T], n=2):
-    it = iter(seq)
-    window = deque(islice(it, n), maxlen=n)
-    yield window
+    window = deque[T](maxlen=n)
 
-    for e in it:
+    for e in seq:
         window.append(e)
-        yield window
+
+        if len(window) >= n:
+            yield window
 
     while window:
-        window.popleft()
+        yield window
 
-        if window:
-            yield window
+
+def deque_set[T](i: deque[T], *values: T):
+    i.clear()
+    i.extend(values)
 
 
 def gilbert(data: list[int], width: int, height: int):
     assert len(data) == width * height
 
     for x, y in gilbert2d(width, height):
-        yield data[x + y * width]
+        yield data[int(x + y * width)]
 
 
 def apply_rle(data: Iterable[int]):
@@ -62,30 +64,20 @@ def apply_rle_ord(data: Iterable[tuple[int, int]], *values: int):
         queue.append(i)
 
 
-def apply_rle_bleed(rle: Iterable[int], max=255, max_bleed=255):
-    skip = 0
-
+def apply_rle_bleed(rle: Iterable[int], max=255, max_bleed=8):
     for i in window(rle, 3):
-        if skip:
-            skip -= 1
-        elif len(i) < 3 or i[0] != 0 or max < i[1] + i[2] or max_bleed < i[1]:
-            yield i[0]
+        if len(i) != 3 or i[0] != 0 or max < i[1] + i[2] or max_bleed < i[1]:
+            yield i.popleft()
         else:
-            yield i[1] + i[2]
-            skip = 2
+            deque_set(i, sum(i))
 
 
 def apply_rle_ridge(rle: Iterable[int], max=255, max_ridge=1):
-    skip = 0
-
     for i in window(rle, 3):
-        if skip:
-            skip -= 1
-        elif len(i) < 3 or max < i[0] + i[1] + i[2] or max_ridge < i[1]:
-            yield i[0]
+        if len(i) != 3 or max < i[0] + i[1] + i[2] or max_ridge < i[1]:
+            yield i.popleft()
         else:
-            yield i[0] + i[1] + i[2]
-            skip = 2
+            deque_set(i, sum(i))
 
 
 with open("options.json", "r") as f:
@@ -95,22 +87,21 @@ frame_data = bytearray()
 
 for file in sorted(Path("out").glob("*.png")):
     with Image.open(file, "r") as f:
-        data = [int(i // 128) for i in f.convert("L").getdata()]
+        data = [int(i) // 128 for i in f.convert("L").getdata()]
 
         if options["gilbert"]:
             data = gilbert(data, f.width, f.height)
 
         data = apply_rle(data)
         data = apply_rle_u8(data)
-        data = apply_rle_ord(data)
+        data = apply_rle_ord(data, 0, 1)
 
         if not options["gilbert"]:
             data = apply_rle_bleed(data)
 
-        for _ in range(2):
-            data = apply_rle_ridge(data)
-
+        data = apply_rle_ridge(data)
         data = list(data)
+        assert sum(data) == f.width * f.height
         n = len(data)
 
         frame_data.append(n % 256)
