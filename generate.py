@@ -105,6 +105,13 @@ class Document:
         self.page = self.doc.add_blank_page(page_size=(page_width, page_height))
         self.page["/Annots"] = []
 
+        self.doc.trailer["/Info"] = pdf.Dictionary(
+            Title="bad.pdf",
+            Creator="https://github.com/esdmr/badpdf generate.py v2",
+            Producer=f"pikepdf v{pdf.__version__}",
+            Trapped=pdf.Name("/False"),
+        )
+
     def add_field(self, obj: pdf.Object):
         obj = self.doc.make_indirect(obj)
         self.doc.Root["/AcroForm"]["/Fields"].append(obj)
