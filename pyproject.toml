@@ -6,5 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ipykernel>=6.29.5",
+    "pikepdf>=9.5.1",
     "pillow>=11.1.0",
 ]

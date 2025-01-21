@@ -1,318 +1,250 @@
-"""
-Most of this code originates from PDFtris’s `gengrid.py`.
-
-See: https://github.com/ThomasRinsma/pdftris/blob/0beca0117bb9412e95bfaebf0f84d09fd38620d0/gengrid.py
-"""
-
 from json import load
+import pikepdf as pdf
+from typing import Callable, Protocol, runtime_checkable
 
 
-PDF_FILE_TEMPLATE = """
-%PDF-1.6
+class Context[T]:
+    def __init__(self, enter: Callable[[], T], exit: Callable[[], None]):
+        self._enter = enter
+        self._exit = exit
 
-% Root
-1 0 obj
-<<
-  /AcroForm <<
-    /Fields [ ###FIELD_LIST### ]
-  >>
-  /Pages 2 0 R
-  /OpenAction 17 0 R
-  /Type /Catalog
->>
-endobj
+    def __enter__(self):
+        return self._enter()
 
-2 0 obj
-<<
-  /Count 1
-  /Kids [
-    16 0 R
-  ]
-  /Type /Pages
->>
-endobj
-
-%% Annots Page 1 (also used as overall fields list)
-21 0 obj
-[
-  ###FIELD_LIST###
-]
-endobj
-
-###FIELDS###
-
-%% Page 1
-16 0 obj
-<<
-  /Annots 21 0 R
-  /Contents 3 0 R
-  /CropBox [
-    0.0
-    0.0
-    ###PAGE_WIDTH###
-    ###PAGE_HEIGHT###
-  ]
-  /MediaBox [
-    0.0
-    0.0
-    ###PAGE_WIDTH###
-    ###PAGE_HEIGHT###
-  ]
-  /Parent 2 0 R
-  /Resources <<
-  >>
-  /Rotate 0
-  /Type /Page
->>
-endobj
-
-3 0 obj
-<< >>
-stream
-endstream
-endobj
-
-17 0 obj
-<<
-  /JS 42 0 R
-  /S /JavaScript
->>
-endobj
+    def __exit__(self, exc_type, exc, traceback):
+        self._exit()
 
 
-42 0 obj
-<< >>
-stream
-
-###JAVASCRIPT###
-
-endstream
-endobj
-
-trailer
-<<
-  /Root 1 0 R
->>
-
-%%EOF
-"""
-
-PLAYING_FIELD_OBJ = """
-###IDX### obj
-<<
-  /FT /Btn
-  /Ff 1
-  /MK <<
-    /BG [
-      ###COLOR###
-    ]
-    /BC [
-      0 0 0
-    ]
-  >>
-  /Border [ 0 0 0 ]
-  /P 16 0 R
-  /Rect [
-    ###RECT###
-  ]
-  /Subtype /Widget
-  /T (playing_field)
-  /Type /Annot
->>
-endobj
-"""
-
-PIXEL_OBJ = """
-###IDX### obj
-<<
-  /FT /Btn
-  /Ff 1
-  /MK <<
-    /BG [
-      ###COLOR###
-    ]
-    /BC [
-      0 0 0
-    ]
-  >>
-  /Border [ 0 0 0 ]
-  /P 16 0 R
-  /Rect [
-    ###RECT###
-  ]
-  /Subtype /Widget
-  /T (P_###X###_###Y###)
-  /Type /Annot
->>
-endobj
-"""
-
-BUTTON_AP_STREAM = """
-###IDX### obj
-<<
-  /BBox [ 0.0 0.0 ###WIDTH### ###HEIGHT### ]
-  /FormType 1
-  /Matrix [ 1.0 0.0 0.0 1.0 0.0 0.0]
-  /Resources <<
-    /Font <<
-      /Courier 10 0 R
-    >>
-    /ProcSet [ /PDF /Text ]
-  >>
-  /Subtype /Form
-  /Type /XObject
->>
-stream
-q
-0.75 g
-0 0 ###WIDTH### ###HEIGHT### re
-f
-Q
-q
-1 1 ###WIDTH### ###HEIGHT### re
-W
-n
-BT
-/Courier 12 Tf
-0 g
-10 8 Td
-(###TEXT###) Tj
-ET
-Q
-endstream
-endobj
-"""
-
-BUTTON_OBJ = """
-###IDX### obj
-<<
-  /A <<
-	  /JS ###SCRIPT_IDX### R
-	  /S /JavaScript
-	>>
-  /AP <<
-    /N ###AP_IDX### R
-  >>
-  /F 4
-  /FT /Btn
-  /Ff 65536
-  /MK <<
-    /BG [
-      0.75
-    ]
-    /CA (###LABEL###)
-  >>
-  /P 16 0 R
-  /Rect [
-    ###RECT###
-  ]
-  /Subtype /Widget
-  /T (###NAME###)
-  /Type /Annot
->>
-endobj
-"""
-
-TEXT_OBJ = """
-###IDX### obj
-<<
-	/AA <<
-		/K <<
-			/JS ###SCRIPT_IDX### R
-			/S /JavaScript
-		>>
-	>>
-	/F 4
-	/FT /Tx
-	/MK <<
-	>>
-	/MaxLen 0
-	/P 16 0 R
-	/Rect [
-		###RECT###
-	]
-	/Subtype /Widget
-	/T (###NAME###)
-	/V (###LABEL###)
-	/Type /Annot
->>
-endobj
-"""
-
-STREAM_OBJ = """
-###IDX### obj
-<< >>
-stream
-###CONTENT###
-endstream
-endobj
-"""
+@runtime_checkable
+class SupportsStr(Protocol):
+    def __str__(self) -> str: ...
 
 
-def guard_script(js: str):
-    return "try{" + js + "}catch(error){app.alert(String(error))}"
+@runtime_checkable
+class SupportsBytes(Protocol):
+    def __bytes__(self) -> bytes: ...
 
 
-def format(src: str, **kw: str | int | float):
-    for k, v in kw.items():
-        src = src.replace(f"###{k.upper()}###", str(v))
-
-    return src
+type Token = pdf.Object | SupportsStr | SupportsBytes
 
 
-def add_field(field: str, **kw: str | int | float):
-    global fields_text, field_indexes, obj_idx_ctr
-
-    kw.setdefault("idx", f"{obj_idx_ctr} 0")
-
-    fields_text += format(field, **kw)
-    field_indexes.append(obj_idx_ctr)
-    obj_idx_ctr += 1
-
-    return str(kw["idx"])
+def unparseToken(i: Token):
+    if isinstance(i, pdf.Object):
+        return i.unparse()
+    if isinstance(i, SupportsBytes):
+        return bytes(i)
+    return str(i).encode()
 
 
-def add_button(
-    label: str,
-    name: str | None,
-    x: int | float,
-    y: int | float,
-    width: int | float,
-    height: int | float,
-    js: str | None,
-):
-    script_idx = none_script_idx if js is None else add_field(STREAM_OBJ, content=js)
+class Graphics:
+    def __init__(self):
+        self.cmd = []
 
-    ap_idx = add_field(BUTTON_AP_STREAM, text=label, width=width, height=height)
+    def push_state(self):
+        self += ("q",)
+        return self
 
-    return add_field(
-        BUTTON_OBJ,
-        script_idx=script_idx,
-        ap_idx=ap_idx,
-        label=label,
-        name=name if name else f"B_{obj_idx_ctr}",
-        rect=f"{x} {y} {x + width} {y + height}",
-    )
+    def pop_state(self):
+        self += ("Q",)
+
+    def state(self):
+        return Context(self.push_state, self.pop_state)
+
+    def set_gray_fill(self, gray: Token):
+        self += (gray, "g")
+
+    def set_gray_stroke(self, gray: Token):
+        self += (gray, "G")
+
+    def rectangle(self, x: Token, y: Token, width: Token, height: Token):
+        self += (x, y, width, height, "re")
+
+    def fill_non_zero(self):
+        self += ("f",)
+
+    def begin_text(self):
+        self += ("BT",)
+        return self
+
+    def end_text(self):
+        self += ("ET",)
+
+    def text(self):
+        return Context(self.begin_text, self.end_text)
+
+    def set_font(self, name: pdf.Name, size: Token):
+        self += (name, size, "Tf")
+
+    def move_to_next_line_start(
+        self,
+        offset: tuple[Token, Token] | None = None,
+    ):
+        if offset is None:
+            self += ("T*",)
+        else:
+            self += (*offset, "Td")
+
+    def show_text(self, text: Token):
+        if isinstance(text, str):
+            text = pdf.String(text)
+
+        self += (text, "Tj")
+
+    def __iadd__(self, other: tuple[Token, ...]):
+        self.cmd.append(b" ".join(unparseToken(i) for i in other))
+        return self
+
+    def __bytes__(self):
+        return b"\n".join(self.cmd)
 
 
-def add_text(
-    label: str,
-    name: str | None,
-    x: int | float,
-    y: int | float,
-    width: int | float,
-    height: int | float,
-    js: str | None,
-):
-    script_idx = none_script_idx if js is None else add_field(STREAM_OBJ, content=js)
+class Document:
+    def __init__(self, page_width: int | float, page_height: int | float) -> None:
+        self.doc = pdf.Pdf.new()
+        self.doc.Root["/AcroForm"] = pdf.Dictionary(Fields=[])
+        self.page = self.doc.add_blank_page(page_size=(page_width, page_height))
+        self.page["/Annots"] = []
 
-    return add_field(
-        TEXT_OBJ,
-        script_idx=script_idx,
-        label=label,
-        name=name if name else f"T_{obj_idx_ctr}",
-        rect=f"{x} {y} {x + width} {y + height}",
-    )
+    def add_field(self, obj: pdf.Object):
+        obj = self.doc.make_indirect(obj)
+        self.doc.Root["/AcroForm"]["/Fields"].append(obj)
+        self.page["/Annots"].append(obj)
+        return obj
+
+    def add_script(self, js: str):
+        js = "try{" + js + "}catch(error){app.alert(String(error))}"
+
+        return self.doc.make_indirect(
+            pdf.Dictionary(
+                S=pdf.Name("/JavaScript"),
+                JS=pdf.Stream(self.doc, js.encode()),
+            )
+        )
+
+    def set_open_action(self, js: pdf.Object | None):
+        self.doc.Root["/OpenAction"] = js
+
+    def add_button(
+        self,
+        *,
+        label: str,
+        name: str,
+        rect: pdf.Rectangle,
+        js: pdf.Object | None,
+    ):
+        ap = Graphics()
+
+        with ap.state():
+            ap.set_gray_fill(0.75)
+            ap.rectangle(0, 0, rect.width, rect.height)
+            ap.fill_non_zero()
+
+        with ap.state():
+            with ap.text():
+                ap.set_font(pdf.Name("/Courier"), 12)
+                ap.set_gray_fill(0)
+                ap.move_to_next_line_start((10, 8))
+                ap.show_text(label)
+
+        return self.add_field(
+            pdf.Dictionary(
+                Type=pdf.Name("/Annot"),
+                Subtype=pdf.Name("/Widget"),
+                FT=pdf.Name("/Btn"),
+                Ff=1 << 16,
+                T=name,
+                Rect=rect,
+                MK=pdf.Dictionary(
+                    BG=[0.75],
+                    CA=label,
+                ),
+                AP=pdf.Dictionary(
+                    N=pdf.Stream(
+                        self.doc,
+                        bytes(ap),
+                        BBox=pdf.Rectangle(0, 0, rect.width, rect.height),
+                        FormType=1,
+                        Matrix=pdf.Matrix().as_array(),
+                        Resources=pdf.Dictionary(
+                            Font=pdf.Dictionary(
+                                # FIXME: 10 0 is not defined
+                                Courier=None,
+                            ),
+                            ProcSet=[
+                                pdf.Name("/PDF"),
+                                pdf.Name("/Text"),
+                            ],
+                        ),
+                    ),
+                ),
+                A=js,
+                P=self.page.obj,
+            )
+        )
+
+    def add_text(
+        self,
+        *,
+        default_value: str,
+        name: str | None,
+        rect: pdf.Rectangle,
+        js: pdf.Object | None,
+    ):
+        return self.add_field(
+            pdf.Dictionary(
+                Type=pdf.Name("/Annot"),
+                Subtype=pdf.Name("/Widget"),
+                FT=pdf.Name("/Tx"),
+                T=name,
+                V=default_value,
+                MK=pdf.Dictionary(
+                    BG=[0.75],
+                ),
+                AA=pdf.Dictionary(
+                    K=js,
+                ),
+                Rect=rect,
+                P=self.page.obj,
+            )
+        )
+
+    def add_playing_field(self, *, color: list[int | float], rect: pdf.Rectangle):
+        return self.add_field(
+            pdf.Dictionary(
+                Type=pdf.Name("/Annot"),
+                Subtype=pdf.Name("/Widget"),
+                FT=pdf.Name("/Btn"),
+                Ff=1 << 0,
+                T="playing_field",
+                Rect=rect,
+                MK=pdf.Dictionary(
+                    BG=color,
+                ),
+                P=self.page.obj,
+            )
+        )
+
+    def add_pixel(
+        self, *, color: list[int | float], rect: pdf.Rectangle, x: int, y: int
+    ):
+        return self.add_field(
+            pdf.Dictionary(
+                Type=pdf.Name("/Annot"),
+                Subtype=pdf.Name("/Widget"),
+                FT=pdf.Name("/Btn"),
+                Ff=1 << 0,
+                T=f"P_{x}_{y}",
+                Rect=rect,
+                MK=pdf.Dictionary(
+                    BG=color,
+                ),
+                P=self.page.obj,
+            )
+        )
+
+
+def rectangle(x: float, y: float, width: float, height: float):
+    return pdf.Rectangle(x, y, x + width, y + height)
 
 
 with open("frames/options.json", "r") as f:
@@ -339,96 +271,103 @@ GRID_AREA_HEIGHT = GRID_HEIGHT * (PX_HEIGHT - PX_HEIGHT_OVERLAY) + PX_HEIGHT_OVE
 GRID_OFF_X = 0
 GRID_OFF_Y = 0
 
-fields_text = ""
-field_indexes = []
-obj_idx_ctr = 50
-none_script_idx = add_field(STREAM_OBJ, content="")
-
+doc = Document(GRID_AREA_WIDTH + GRID_OFF_X * 2, GRID_AREA_HEIGHT + GRID_OFF_Y * 2 + 40)
 
 if not IN_ROWS:
-    add_field(
-        PLAYING_FIELD_OBJ,
-        color="1",
-        rect=f"{GRID_OFF_X} {GRID_OFF_Y} {GRID_OFF_X+GRID_WIDTH*PX_WIDTH} {GRID_OFF_Y+GRID_HEIGHT*PX_HEIGHT}",
+    doc.add_playing_field(
+        color=[1],
+        rect=rectangle(
+            GRID_OFF_X,
+            GRID_OFF_Y,
+            GRID_WIDTH * PX_WIDTH,
+            GRID_HEIGHT * PX_HEIGHT,
+        ),
     )
 
 for y in range(GRID_HEIGHT):
     if IN_ROWS:
-        add_text(
-            "",
-            f"R_{y}",
-            0,
-            GRID_OFF_Y + y * (PX_HEIGHT - PX_HEIGHT_OVERLAY),
-            GRID_AREA_WIDTH,
-            PX_HEIGHT,
-            None
+        doc.add_text(
+            default_value="",
+            name=f"R_{y}",
+            rect=rectangle(
+                GRID_OFF_X,
+                GRID_OFF_Y + y * (PX_HEIGHT - PX_HEIGHT_OVERLAY),
+                GRID_AREA_WIDTH,
+                PX_HEIGHT,
+            ),
+            js=None,
         )
         continue
 
     for x in range(GRID_WIDTH):
-        add_field(
-            PIXEL_OBJ,
-            color="0",
-            rect=f"{GRID_OFF_X+x*PX_WIDTH} {GRID_OFF_Y+y*PX_HEIGHT} {GRID_OFF_X+x*PX_WIDTH+PX_WIDTH} {GRID_OFF_Y+y*PX_HEIGHT+PX_HEIGHT}",
+        doc.add_pixel(
+            color=[0],
+            rect=rectangle(
+                GRID_OFF_X + x * PX_WIDTH,
+                GRID_OFF_Y + y * PX_HEIGHT,
+                PX_WIDTH,
+                PX_HEIGHT,
+            ),
             x=x,
             y=y,
         )
 
 
-add_button(
-    "Play",
-    "B_play",
-    GRID_OFF_X + GRID_AREA_WIDTH // 2 - 50,
-    GRID_OFF_Y + GRID_AREA_HEIGHT // 2 - 50,
-    100,
-    100,
-    guard_script("onInit();"),
+doc.add_button(
+    label="Play",
+    name="B_play",
+    rect=rectangle(
+        GRID_OFF_X + GRID_AREA_WIDTH // 2 - 50,
+        GRID_OFF_Y + GRID_AREA_HEIGHT // 2 - 50,
+        100,
+        100,
+    ),
+    js=doc.add_script("onInit();"),
 )
 
-add_button(
-    "Pause/Resume",
-    "B_pause_resume",
-    GRID_OFF_X,
-    GRID_OFF_Y + GRID_AREA_HEIGHT,
-    GRID_AREA_WIDTH // 2,
-    20,
-    guard_script("onPauseResume();"),
+doc.add_button(
+    label="Pause/Resume",
+    name="B_pause_resume",
+    rect=rectangle(
+        GRID_OFF_X,
+        GRID_OFF_Y + GRID_AREA_HEIGHT,
+        GRID_AREA_WIDTH // 2,
+        20,
+    ),
+    js=doc.add_script("onPauseResume();"),
 )
 
-add_button(
-    "Next Frame",
-    "B_next_frame",
-    GRID_OFF_X + GRID_AREA_WIDTH // 2,
-    GRID_OFF_Y + GRID_AREA_HEIGHT,
-    GRID_AREA_WIDTH // 2,
-    20,
-    guard_script("onNextFrame();"),
+doc.add_button(
+    label="Next Frame",
+    name="B_next_frame",
+    rect=rectangle(
+        GRID_OFF_X + GRID_AREA_WIDTH // 2,
+        GRID_OFF_Y + GRID_AREA_HEIGHT,
+        GRID_AREA_WIDTH // 2,
+        20,
+    ),
+    js=doc.add_script("onNextFrame();"),
 )
 
-add_text(
-    "",
-    "T_stat",
-    GRID_OFF_X,
-    GRID_OFF_Y + GRID_AREA_HEIGHT + 20,
-    GRID_AREA_WIDTH,
-    20,
-    "",
+doc.add_text(
+    default_value="",
+    name="T_stat",
+    rect=rectangle(
+        GRID_OFF_X,
+        GRID_OFF_Y + GRID_AREA_HEIGHT + 20,
+        GRID_AREA_WIDTH,
+        20,
+    ),
+    js=None,
 )
 
 with open("js/out/bad.js", "r") as f:
-    pdf_js = f.read()
+    doc.set_open_action(doc.add_script(f.read()))
 
-filled_pdf = format(
-    PDF_FILE_TEMPLATE,
-    fields=fields_text,
-    javascript=guard_script(pdf_js),
-    field_list=" ".join([f"{i} 0 R" for i in field_indexes]),
-    grid_width=GRID_WIDTH,
-    grid_height=GRID_HEIGHT,
-    fps=FPS,
-    page_width=GRID_AREA_WIDTH + GRID_OFF_X * 2,
-    page_height=GRID_AREA_HEIGHT + GRID_OFF_Y * 2 + 40,
+doc.doc.save(
+    "bad.pdf",
+    preserve_pdfa=False,
+    object_stream_mode=pdf.ObjectStreamMode(pdf.ObjectStreamMode.generate),
+    normalize_content=True,
+    deterministic_id=True,
 )
-
-with open("bad.pdf", "w") as f:
-    f.write(filled_pdf)
