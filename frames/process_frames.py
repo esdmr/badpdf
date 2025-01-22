@@ -70,6 +70,22 @@ def apply_rle_ridge(rle: Iterable[int], max=1):
             deque_set(i, sum(i))
 
 
+def apply_rle_plain(rle: Iterable[int], max=4):
+    in_plain = False
+
+    for i in window(rle, 3):
+        if in_plain:
+            if len(i) != 3 or max < i[1] or max < i[2]:
+                in_plain = False
+            else:
+                deque_set(i, sum(i))
+        else:
+            if len(i) != 3 or max < i[0] or max < i[1] or max < i[2]:
+                yield i.popleft()
+            else:
+                in_plain = True
+
+
 def apply_rle_vlq(data: Iterable[int]):
     for i in data:
         yield from encode(i)
@@ -100,6 +116,7 @@ for file in sorted(Path("out").glob("*.png")):
         data = apply_rle(data)
         data = apply_rle_ord(data, 0, 1)
         data = apply_rle_ridge(data)
+        data = apply_rle_plain(data)
         data = apply_rle_vlq(data)
 
         data = list(data)
