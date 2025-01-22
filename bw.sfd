@@ -23,7 +23,7 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1737364779
-ModificationTime: 1737366992
+ModificationTime: 1737489252
 PfmFamily: 49
 TTFWeight: 400
 TTFWidth: 5
@@ -70,8 +70,8 @@ Fore
 Validated: 1
 EndChar
 
-StartChar: at
-Encoding: 64 64 1
+StartChar: exclam
+Encoding: 33 33 1
 Width: 1000
 VWidth: 1024
 Flags: W
@@ -86,7 +86,6 @@ SplineSet
  -2 -502 l 1
  -2 502 l 1
 EndSplineSet
-Validated: 1
 EndChar
 EndChars
 EndSplineFont

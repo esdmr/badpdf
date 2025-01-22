@@ -97,6 +97,9 @@ class Graphics:
     def __bytes__(self):
         return b"\n".join(self.cmd)
 
+    def __str__(self) -> str:
+        return bytes(self).decode()
+
 
 class Document:
     def __init__(self, page_width: int | float, page_height: int | float) -> None:
@@ -105,11 +108,59 @@ class Document:
         self.page = self.doc.add_blank_page(page_size=(page_width, page_height))
         self.page["/Annots"] = []
 
-        self.doc.trailer["/Info"] = pdf.Dictionary(
-            Title="bad.pdf",
-            Creator="https://github.com/esdmr/badpdf generate.py v2",
-            Producer=f"pikepdf v{pdf.__version__}",
-            Trapped=pdf.Name("/False"),
+        with open("bw.pfb", "rb") as f:
+            bw = f.read()
+
+        self.bw = self.doc.make_indirect(
+            pdf.Dictionary(
+                Type=pdf.Name("/Font"),
+                Subtype=pdf.Name("/Type1"),
+                BaseFont=pdf.Name("/BW"),
+                FirstChar=ord(" "),
+                LastChar=ord("!"),
+                Widths=[1000, 1000],
+                FontDescriptor=self.doc.make_indirect(
+                    pdf.Dictionary(
+                        Type=pdf.Name("/FontDescriptor"),
+                        FontName=pdf.Name("/BW"),
+                        Flags=(1 << 0) | (1 << 6),
+                        FontBBox=pdf.Rectangle(0, 0, 1000, 1000),
+                        ItalicAngle=0,
+                        Ascent=500,
+                        Descent=-500,
+                        CapHeight=500,
+                        StemV=500,
+                        FontFile=pdf.Stream(
+                            self.doc,
+                            bw,
+                            Length1=880,
+                            Length2=1074,
+                            Length3=535,
+                        ),
+                    )
+                ),
+            )
+        )
+
+        self.page.add_resource(self.bw, pdf.Name("/Font"), pdf.Name("/BW"))
+
+        self.f1 = self.doc.make_indirect(
+            pdf.Dictionary(
+                Type=pdf.Name("/Font"),
+                Subtype=pdf.Name("/Type1"),
+                BaseFont=pdf.Name("/Courier"),
+            )
+        )
+
+        self.page.add_resource(self.f1, pdf.Name("/Font"), pdf.Name("/F1"))
+
+        self.doc.trailer["/Info"] = self.doc.make_indirect(
+            pdf.Dictionary(
+                Title="bad.pdf",
+                Creator="https://github.com/esdmr/badpdf generate.py v2",
+                Producer=f"pikepdf v{pdf.__version__}",
+                Trapped=pdf.Name("/False"),
+            )
         )
 
     def add_field(self, obj: pdf.Object):
@@ -121,11 +172,9 @@ class Document:
     def add_script(self, js: str):
         js = "try{" + js + "}catch(error){app.alert(String(error))}"
 
-        return self.doc.make_indirect(
-            pdf.Dictionary(
-                S=pdf.Name("/JavaScript"),
-                JS=pdf.Stream(self.doc, js.encode()),
-            )
+        return pdf.Dictionary(
+            S=pdf.Name("/JavaScript"),
+            JS=pdf.Stream(self.doc, js.encode()),
         )
 
     def set_open_action(self, js: pdf.Object | None):
@@ -148,7 +197,7 @@ class Document:
 
         with ap.state():
             with ap.text():
-                ap.set_font(pdf.Name("/Courier"), 12)
+                ap.set_font(pdf.Name("/F1"), 12)
                 ap.set_gray_fill(0)
                 ap.move_to_next_line_start((10, 8))
                 ap.show_text(label)
@@ -174,8 +223,7 @@ class Document:
                         Matrix=pdf.Matrix().as_array(),
                         Resources=pdf.Dictionary(
                             Font=pdf.Dictionary(
-                                # FIXME: 10 0 is not defined
-                                Courier=None,
+                                F1=self.f1,
                             ),
                             ProcSet=[
                                 pdf.Name("/PDF"),
@@ -196,7 +244,22 @@ class Document:
         name: str | None,
         rect: pdf.Rectangle,
         js: pdf.Object | None,
+        font_name: pdf.Name = pdf.Name("/F1"),
+        font_obj: pdf.Object | None = None,
     ):
+        da = Graphics()
+        da.set_gray_fill(0)
+        da.set_font(font_name, rect.height)
+
+        ap = Graphics()
+
+        with ap.state():
+            with ap.text():
+                ap.set_font(font_name, rect.height)
+                ap.set_gray_fill(0)
+                ap.move_to_next_line_start()
+                ap.show_text(default_value)
+
         return self.add_field(
             pdf.Dictionary(
                 Type=pdf.Name("/Annot"),
@@ -204,8 +267,22 @@ class Document:
                 FT=pdf.Name("/Tx"),
                 T=name,
                 V=default_value,
-                MK=pdf.Dictionary(
-                    BG=[0.75],
+                DA=str(da),
+                AP=pdf.Dictionary(
+                    N=pdf.Stream(
+                        self.doc,
+                        bytes(ap),
+                        BBox=pdf.Rectangle(0, 0, rect.width, rect.height),
+                        FormType=1,
+                        Matrix=pdf.Matrix().as_array(),
+                        Resources=pdf.Dictionary(
+                            Font=pdf.Dictionary({str(font_name): font_obj or self.f1}),
+                            ProcSet=[
+                                pdf.Name("/PDF"),
+                                pdf.Name("/Text"),
+                            ],
+                        ),
+                    ),
                 ),
                 AA=pdf.Dictionary(
                     K=js,
@@ -215,7 +292,22 @@ class Document:
             )
         )
 
-    def add_playing_field(self, *, color: list[int | float], rect: pdf.Rectangle):
+    def add_row(
+        self,
+        *,
+        y: int,
+        rect: pdf.Rectangle,
+    ):
+        return self.add_text(
+            default_value="",
+            name=f"R_{y}",
+            rect=rect,
+            font_name=pdf.Name("/BW"),
+            font_obj=self.bw,
+            js=None,
+        )
+
+    def add_playing_field(self, *, color: float, rect: pdf.Rectangle):
         return self.add_field(
             pdf.Dictionary(
                 Type=pdf.Name("/Annot"),
@@ -225,15 +317,13 @@ class Document:
                 T="playing_field",
                 Rect=rect,
                 MK=pdf.Dictionary(
-                    BG=color,
+                    BG=[color],
                 ),
                 P=self.page.obj,
             )
         )
 
-    def add_pixel(
-        self, *, color: list[int | float], rect: pdf.Rectangle, x: int, y: int
-    ):
+    def add_pixel(self, *, color: float, rect: pdf.Rectangle, x: int, y: int):
         return self.add_field(
             pdf.Dictionary(
                 Type=pdf.Name("/Annot"),
@@ -243,7 +333,7 @@ class Document:
                 T=f"P_{x}_{y}",
                 Rect=rect,
                 MK=pdf.Dictionary(
-                    BG=color,
+                    BG=[color],
                 ),
                 P=self.page.obj,
             )
@@ -265,9 +355,9 @@ with open("frames/ffmpeg.json", "r") as f:
     FPS = int(ffmpeg_options["fps"])
 
 if IN_ROWS:
-    PX_WIDTH = 10
+    PX_WIDTH = 16
     PX_HEIGHT = 16
-    PX_HEIGHT_OVERLAY = 8
+    PX_HEIGHT_OVERLAY = 2
 else:
     PX_WIDTH = 16
     PX_HEIGHT = 16
@@ -282,7 +372,7 @@ doc = Document(GRID_AREA_WIDTH + GRID_OFF_X * 2, GRID_AREA_HEIGHT + GRID_OFF_Y *
 
 if not IN_ROWS:
     doc.add_playing_field(
-        color=[1],
+        color=1.0,
         rect=rectangle(
             GRID_OFF_X,
             GRID_OFF_Y,
@@ -293,22 +383,20 @@ if not IN_ROWS:
 
 for y in range(GRID_HEIGHT):
     if IN_ROWS:
-        doc.add_text(
-            default_value="",
-            name=f"R_{y}",
+        doc.add_row(
+            y=y,
             rect=rectangle(
                 GRID_OFF_X,
                 GRID_OFF_Y + y * (PX_HEIGHT - PX_HEIGHT_OVERLAY),
                 GRID_AREA_WIDTH,
                 PX_HEIGHT,
             ),
-            js=None,
         )
         continue
 
     for x in range(GRID_WIDTH):
         doc.add_pixel(
-            color=[0],
+            color=0.0,
             rect=rectangle(
                 GRID_OFF_X + x * PX_WIDTH,
                 GRID_OFF_Y + y * PX_HEIGHT,
