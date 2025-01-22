@@ -1,4 +1,4 @@
-import {gilbert, rows, char0, char1} from '../../frames/options.json';
+import {gilbert, rows, char0BWFont, char1BWFont, char0NoFont, char1NoFont} from '../../frames/options.json';
 import {width, height, fps} from '../../frames/ffmpeg.json';
 import frames from '../../frames/out/frames.bin?uint8array&base64';
 import {d2xy} from '#gilbert';
@@ -8,6 +8,9 @@ export const mspf = 1000 / fps;
 const statusField = getField('T_stat');
 const fields: Field[][] = [];
 const fieldValues: string[][] = [];
+const fontFallback = app.viewerType === 'PDF.js';
+const char0 = fontFallback ? char0NoFont : char0BWFont;
+const char1 = fontFallback ? char1NoFont : char1BWFont;
 
 const indexMap = Array.from(
 	{length: width * height},
@@ -37,6 +40,12 @@ if (rows) {
 try {
 	app.execMenuItem('FitPage');
 } catch {}
+
+statusField.value = `Ready. ${app.viewerType} ${app.viewerVariation} v${app.viewerVersion}, AcroForm v${app.formsVersion}.`;
+
+if (rows) {
+	statusField.value += ` Embedded font is ${fontFallback ? 'not ' : ''}supported, probably.`;
+}
 
 export {frames};
 

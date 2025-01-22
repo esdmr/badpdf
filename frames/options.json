@@ -1,6 +1,8 @@
 {
 	"gilbert": true,
 	"rows": true,
-	"char0": "!",
-	"char1": " "
+	"char0BWFont": "!",
+	"char1BWFont": " ",
+	"char0NoFont": "!!!!",
+	"char1NoFont": "    "
 }
