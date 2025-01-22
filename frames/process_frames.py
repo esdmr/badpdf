@@ -120,9 +120,6 @@ for file in sorted(Path("out").glob("*.png")):
         data = apply_rle_vlq(data)
 
         data = list(data)
-        if len(data) >= 128:
-            print(f.filename, len(data))
-
         frame_data.extend(encode(len(data)))
         frame_data.extend(data)
 

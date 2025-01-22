@@ -20,8 +20,6 @@ const indexMap = Array.from({length: width * height}, (_, i) => {
 	return x + y * width;
 });
 
-console.log(indexMap);
-
 export {frames};
 export const setInterval = globalThis.setInterval;
 export const clearInterval = globalThis.clearInterval;
