@@ -9,15 +9,16 @@ from typing import Iterable
 from PIL import Image
 from json import load
 from gilbert.gilbert2d import gilbert2d
+from pyvlq import encode
 
 
 def window[T](seq: Iterable[T], n=2):
-    window = deque[T](maxlen=n)
+    window = deque[T]()
 
     for e in seq:
         window.append(e)
 
-        if len(window) >= n:
+        while len(window) >= n:
             yield window
 
     while window:
@@ -46,43 +47,32 @@ def apply_rle(data: Iterable[int]):
         yield (curr, sum(1 for _ in it))
 
 
-def apply_rle_u8(data: Iterable[tuple[int, int]]):
-    for i, n in data:
-        for _ in range(n // 0xFF):
-            yield (i, 0xFF)
-
-        yield (i, n % 0xFF)
-
-
 def apply_rle_ord(data: Iterable[tuple[int, int]], *values: int):
     assert values
-    queue = deque(values, maxlen=len(values))
+    queue = deque(values)
 
     for i, n in data:
         assert i in values
 
         while queue[0] != i:
             yield 0
-            queue.append(queue[0])
+            queue.rotate(-1)
 
         yield n
-        queue.append(i)
+        queue.rotate(-1)
 
 
-def apply_rle_bleed(rle: Iterable[int], max=255, max_bleed=8):
+def apply_rle_ridge(rle: Iterable[int], max=1):
     for i in window(rle, 3):
-        if len(i) != 3 or i[0] != 0 or max < i[1] + i[2] or max_bleed < i[1]:
+        if len(i) != 3 or max < i[1]:
             yield i.popleft()
         else:
             deque_set(i, sum(i))
 
 
-def apply_rle_ridge(rle: Iterable[int], max=255, max_ridge=1):
-    for i in window(rle, 3):
-        if len(i) != 3 or max < i[0] + i[1] + i[2] or max_ridge < i[1]:
-            yield i.popleft()
-        else:
-            deque_set(i, sum(i))
+def apply_rle_vlq(data: Iterable[int]):
+    for i in data:
+        yield from encode(i)
 
 
 with open("options.json", "r") as f:
@@ -102,25 +92,21 @@ for file in sorted(Path("out").glob("*.png")):
         assert f.width == WIDTH
         assert f.height == HEIGHT
 
-        data = [int(i) // 128 for i in f.convert("L").getdata()]
+        data = [int(i) >> 7 for i in f.convert("L").getdata()]
 
         if GILBERT:
             data = gilbert(data, f.width, f.height, gilbert_cache)
 
         data = apply_rle(data)
-        data = apply_rle_u8(data)
         data = apply_rle_ord(data, 0, 1)
-
-        if not GILBERT:
-            data = apply_rle_bleed(data)
-
         data = apply_rle_ridge(data)
-        data = list(data)
-        assert sum(data) == f.width * f.height
-        n = len(data)
+        data = apply_rle_vlq(data)
 
-        frame_data.append(n % 256)
-        frame_data.append(n // 256)
+        data = list(data)
+        if len(data) >= 128:
+            print(f.filename, len(data))
+
+        frame_data.extend(encode(len(data)))
         frame_data.extend(data)
 
 with open("out/frames.bin", "wb") as f:

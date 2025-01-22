@@ -27,8 +27,21 @@ globalThis.onInit = onInit;
 globalThis.onNextFrame = onNextFrame;
 globalThis.onPauseResume = onPauseResume;
 
-function readFrameLength() {
-	return frames[index++] + frames[index++] * 256;
+function readNextInt() {
+	let value = 0;
+	let more: number;
+
+	do {
+		if (index >= frames.length) {
+			throw new RangeError('Incomplete VLQ found');
+		}
+
+		const byte = frames[index++];
+		value = ((value << 7) | (byte & 0x7F));
+		more = (byte >> 7);
+	} while (more);
+
+	return value;
 }
 
 function onFrame() {
@@ -46,26 +59,27 @@ function onFrame() {
 	if (deltaFrames < 1) return;
 
 	for (let i = 1; i < deltaFrames && index < frames.length; i++) {
-		index = readFrameLength() + index;
+		index = readNextInt() + index;
+		frame++;
+		skippedFrames++;
 	}
 
-	frame += deltaFrames - 1;
-	skippedFrames += deltaFrames - 1;
 	lastTime += deltaFrames * mspf;
 	onNextFrame();
 }
 
 function onNextFrame() {
-	if (lastTime < 0) return;
+	if (index >= frames.length) return;
 
-	const end = readFrameLength() + index;
+	const end = readNextInt() + index;
 	startFrame();
-
 	let active = false;
 	let pixelIndex = 0;
 
-	for (; index < end; index++) {
-		for (let i = frames[index]; i > 0; i--) {
+	while (index < end) {
+		const length = readNextInt();
+
+		for (let i = 0; i < length; i++) {
 			setPixel(pixelIndex++, active);
 		}
 

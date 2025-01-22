@@ -27,6 +27,7 @@ dependencies = [
     { name = "ipykernel" },
     { name = "pikepdf" },
     { name = "pillow" },
+    { name = "pyvlq" },
 ]
 
 [package.metadata]
@@ -34,6 +35,7 @@ requires-dist = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "pikepdf", specifier = ">=9.5.1" },
     { name = "pillow", specifier = ">=11.1.0" },
+    { name = "pyvlq", specifier = ">=0.1.1" },
 ]
 
 [[package]]
@@ -464,6 +466,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892 },
+]
+
+[[package]]
+name = "pyvlq"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/a8/6c55fe83f0ada0937840de122158327e05282f1243cee9f89aa7302de430/pyvlq-0.1.1.tar.gz", hash = "sha256:f1d8c7d8b07f1a7de83f70793e33f0cbceb345262e98809d8fc526ad37870aa5", size = 3615 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/aa/41/8e5971ebd3c22d452e9d9e572b76e1db8b79a17bdfefc09905888cf6f62a/pyvlq-0.1.1-py3-none-any.whl", hash = "sha256:da248d8484b86cab77c4ceabfadea70704e9530b651d88c94c12acdf5d55861c", size = 3508 },
 ]
 
 [[package]]
