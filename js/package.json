@@ -17,7 +17,7 @@
 		"check:shared": "tsc -p shared",
 		"check:pdf": "tsc -p pdf",
 		"check:html": "tsc -p html",
-		"check": "pnpm run check:root && pnpm run check:shared && pnpm run check:pdf && pnpm run check:html"
+		"check": "corepack pnpm run check:root && corepack pnpm run check:shared && corepack pnpm run check:pdf && corepack pnpm run check:html"
 	},
 	"devDependencies": {
 		"@types/node": "20",

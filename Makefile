@@ -26,7 +26,7 @@ js/out/bad.js: frames/out/frames.bin frames/options.json frames/ffmpeg.json js/s
 	cd js; corepack pnpm vite build -m pdf
 
 js/pnpm-lock.yaml: js/package.json
-	cd js; pnpm i
+	cd js; corepack pnpm i
 	touch js/pnpm-lock.yaml
 
 .PHONY: build preview dev
