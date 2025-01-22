@@ -111,5 +111,5 @@ function onInit() {
 	frame = 0;
 	skippedFrames = 0;
 	lastTime = Date.now();
-	interval = setInterval('try{onFrame();}catch(error){app.alert(String(error))}	', mspf);
+	interval = setInterval('onFrame();', mspf);
 }

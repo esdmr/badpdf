@@ -49,8 +49,8 @@ if (rows) {
 
 export {frames};
 
-export function setInterval(fn: string, ms: number): unknown {
-	return app.setInterval(fn, ms);
+export function setInterval(js: string, ms: number): unknown {
+	return app.setInterval(`try{${js}}catch(error){app.alert(String(error))}`, ms);
 }
 
 export function clearInterval(i: unknown) {
