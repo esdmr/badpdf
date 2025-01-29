@@ -4,6 +4,17 @@ An experiment to play [“Bad Apple!!”][bad-apple] in a JavaScript-enabled PDF
 viewer. It is tested in Chromium (PDFium) and Firefox (PDF.js). The initial page
 load might take a few seconds.
 
+## Download
+
+|                                            Name                                             | Description                                           |
+| :-----------------------------------------------------------------------------------------: | :---------------------------------------------------- |
+|    [`bad-hc-px.pdf`](https://github.com/esdmr/badpdf/releases/download/v2/bad-hc-px.pdf)    | slower, works on both Firefox and Chromium            |
+|    [`bad-hc-rw.pdf`](https://github.com/esdmr/badpdf/releases/download/v2/bad-hc-rw.pdf)    | faster, best viewed in Chromium                       |
+| [`bad-orig-res.pdf`](https://github.com/esdmr/badpdf/releases/download/v2/bad-orig-res.pdf) | original resolution, best viewed in Chromium          |
+| [`bad-half-res.pdf`](https://github.com/esdmr/badpdf/releases/download/v2/bad-half-res.pdf) | half the original resolution, best viewed in Chromium |
+
+Check the [latest release](https://github.com/esdmr/badpdf/releases/latest) for more.
+
 ## Requirement
 
 - [UV][uv]
