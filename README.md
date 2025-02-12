@@ -28,7 +28,7 @@ Check the [latest release](https://github.com/esdmr/badpdf/releases/latest) for 
 ## Building
 
 ```sh
-git clone esdmr/badpdf --recurse-submodules
+git clone https://github.com/esdmr/badpdf.git --recurse-submodules
 cd badpdf
 make
 
